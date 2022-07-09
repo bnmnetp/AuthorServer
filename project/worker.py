@@ -1,5 +1,6 @@
 import os
 import time
+import subprocess
 
 from celery import Celery
 
@@ -21,3 +22,22 @@ def create_task(self, task_type):
 
 
 # update state - https://www.distributedpython.com/2018/09/28/celery-task-states/#:~:text=The%20update_state%20method.%20The%20Celery%20task%20object%20provides,define%20your%20own%20state%20is%20a%20unique%20name.
+
+# new worker
+# 1. pull from github for the given repo
+# 2. build
+# 3. Update the _static (for ptx)
+# 4. process manifest (for ptx)
+# 5. Update the library
+@celery.task(bind=True, name="build_runestone_book")
+def build_runestone_book(self, repo):
+    self.update_state(state="PROGRESS", meta={"step": "clone"})
+    print("Running clone command for ", repo)
+    res = subprocess.run(
+        f"git clone {repo}", shell=True, capture_output=True, cwd="/books"
+    )
+    print(res.returncode)
+    print(res.stdout)
+    print(res.stderr)
+
+    return True

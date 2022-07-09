@@ -2,7 +2,7 @@ from fastapi import Body, FastAPI, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from worker import create_task
+from worker import create_task, build_runestone_book
 from celery.result import AsyncResult
 
 
@@ -14,6 +14,13 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("home.html", context={"request": request})
+
+
+@app.post("/clone", status_code=201)
+def do_clone(payload=Body(...)):
+    repourl = payload["url"]
+    task = build_runestone_book.delay(repourl)
+    return JSONResponse({"task_id": task.id})
 
 
 @app.post("/tasks", status_code=201)
@@ -29,6 +36,6 @@ def get_status(task_id):
     result = {
         "task_id": task_id,
         "task_status": task_result.status,
-        "task_result": task_result.result
+        "task_result": task_result.result,
     }
     return JSONResponse(result)

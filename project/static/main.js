@@ -18,6 +18,24 @@ function handleClick(type) {
         });
 }
 
+// Trigger the task to clone a given repo.
+// This task is implemented in worker.py
+//
+function cloneTask() {
+    let repo = document.querySelector("#gitrepo");
+    fetch("/clone", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: repo.value }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            getStatus(data.task_id);
+        });
+}
+
 function getStatus(taskID) {
     fetch(`/tasks/${taskID}`, {
         method: "GET",
