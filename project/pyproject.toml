@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "runestone-builder"
+version = "0.1.0"
+description = "Allow authors to manage and build books"
+authors = ["Brad Miller <bonelake@mac.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.78.0"
+celery = "^5.2.7"
+aiofiles = "^0.8.0"
+Jinja2 = "^3.0.0"
+pytest = "^7.1.2"
+redis = "^4.3.4"
+requests = "^2.28.1"
+uvicorn = "^0.18.2"
+pretextbook = "^0.8.1"
+runestone = ">=6.3.0,<7.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
