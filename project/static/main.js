@@ -23,12 +23,13 @@ function handleClick(type) {
 //
 function cloneTask() {
     let repo = document.querySelector("#gitrepo");
+    let bcname = document.querySelector("#bcname");    
     fetch("/clone", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: repo.value }),
+        body: JSON.stringify({ url: repo.value, bcname: bcname.value }),
     })
         .then((response) => response.json())
         .then((data) => {
