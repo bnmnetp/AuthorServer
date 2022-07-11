@@ -18,4 +18,4 @@ RUN pip install poetry
 
 # copy project
 COPY . .
-RUN poetry install
+#RUN poetry install

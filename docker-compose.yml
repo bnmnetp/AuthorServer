@@ -6,24 +6,28 @@ services:
     build: ./project
     ports:
       - 8004:8000
-    command: poetry run uvicorn main:app --host 0.0.0.0 --reload
+    command: ./start-web.sh
     volumes:
       - ./project:/usr/src/app
+      - /Users/bmiller/Runestone/RunestoneComponents:/usr/src/RunestoneComponents
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DEV_DBURL=postgresql://bmiller:@192.168.200.74/runestone_dev
     depends_on:
       - redis
 
   worker:
     build: ./project
-    command: poetry run celery -A worker.celery worker
+    command: ./start-worker.sh
     volumes:
       - ./project:/usr/src/app
       - /Users/bmiller/Runestone/books:/books
+      - /Users/bmiller/Runestone/RunestoneComponents:/usr/src/RunestoneComponents    
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DEV_DBURL=postgresql://bmiller:@192.168.200.74/runestone_dev      
     depends_on:
       - web
       - redis

@@ -4,6 +4,8 @@ import time
 import subprocess
 import logging
 
+FASTBUILDER = 1
+from runestone.server.utils import _build_runestone_book, _build_ptx_book
 
 logger = logging.getLogger("runestone")
 handler = logging.StreamHandler(sys.stdout)
@@ -43,7 +45,7 @@ def create_task(self, task_type):
 # 5. Update the library
 @celery.task(bind=True, name="clone_runestone_book")
 def clone_runestone_book(self, repo, bcname):
-    self.update_state(state="CLONING", meta={"step": "clone"})
+    self.update_state(state="CLONING", meta={"current": "cloning"})
     logger.debug(f"Running clone command for {repo}")
     cwd = os.getcwd()
     try:
@@ -56,7 +58,7 @@ def clone_runestone_book(self, repo, bcname):
             self.update_state(state="FAILED", meta={"current": err[:20]})
             return False
     except:
-        self.update_state(state="FAILED", meta={"step": "clone"})
+        self.update_state(state="FAILED", meta={"current": "failed"})
         return False
 
     # check the name of the repo move the top level file
@@ -75,22 +77,23 @@ def clone_runestone_book(self, repo, bcname):
 
 @celery.task(bind=True, name="build_runestone_book")
 def build_runestone_book(self, book):
-    self.update_state(state="CHECKING", meta={"step": "clone"})
+    self.update_state(state="CHECKING", meta={"current": "pull latest"})
     res = subprocess.run(
         f"git pull", shell=True, capture_output=True, cwd=f"/books/{book}"
     )
     if res.returncode != 0:
         return False
 
+    _build_runestone_book(book)
+
+
+@celery.task(bind=True, name="build_ptx_book")
+def build_ptx_book(self, book):
+    self.update_state(state="CHECKING", meta={"current": "pull latest"})
     res = subprocess.run(
-        f"pretext build runestone",
-        shell=True,
-        capture_output=True,
-        cwd=f"/books/{book}",
+        f"git pull", shell=True, capture_output=True, cwd=f"/books/{book}"
     )
-    res = subprocess.run(
-        f"runestone build --all deploy",
-        shell=True,
-        capture_output=True,
-        cwd=f"/books/{book}",
-    )
+    if res.returncode != 0:
+        return False
+
+    _build_runestone_book(book)

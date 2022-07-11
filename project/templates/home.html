@@ -1,23 +1,42 @@
 {% extends "_base.html" %} {% block content %}
 
 <div class="starter-template">
-    <h1>PreTeXt / Runestone Book Manager</h1>
+    <h1>Runestone / PreTeXt Book Manager</h1>
     <hr />
     <br />
     <div>
         <h3>Tasks</h3>
         <label for="bcname">Your document id / basecourse name</label>
-        <input id="bcname" type="text" name="bcname" />
-
+        <input id="bcname" type="text" name="bcname" onchange="checkDB(this)" />
+        <br />
+        <div class="taskbox">
+            <button type="button" onclick="addCourse()">
+                Add Book to Database
+            </button>
+        </div>
         <label for="gitrepo">Github Repo URL</label>
         <input id="gitrepo" type="text" name="githubrepo" />
         <button type="button" onclick="cloneTask()">Clone Repo</button>
-
-        <button type="button" onclick="buildTask()">Build Book</button>
-
-        <button type="button" onclick="deployTask()">
-            Deploy to All Servers
-        </button>
+        <div class="taskbox">
+            <button type="button" onclick="buildTask()">
+                Build Runestone Book
+            </button>
+        </div>
+        <div class="taskbox">
+            <button type="button" onclick="buildTask()">
+                Build PreTeXt Book
+            </button>
+        </div>
+        <div class="taskbox">
+            <button type="button" onclick="ViewBook()">
+                View Book in New Tab
+            </button>
+        </div>
+        <div class="taskbox">
+            <button type="button" onclick="deployTask()">
+                Deploy to All Servers
+            </button>
+        </div>
     </div>
     <br /><br />
     <div>

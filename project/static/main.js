@@ -23,7 +23,7 @@ function handleClick(type) {
 //
 function cloneTask() {
     let repo = document.querySelector("#gitrepo");
-    let bcname = document.querySelector("#bcname");    
+    let bcname = document.querySelector("#bcname");
     fetch("/clone", {
         method: "POST",
         headers: {
@@ -37,6 +37,45 @@ function cloneTask() {
         });
 }
 
+// see checkDB in main.py
+async function checkDB(el) {
+    let response = await fetch("/book_in_db", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bcname: el.value }),
+    });
+    if (response.ok) {
+        let data = await response.json();
+        if (data.detail == true) {
+            alert("book is there");
+            // add a check next to add book to database and disable that button
+        }
+    }
+}
+
+// see new_course in main.py
+async function addCourse() {
+    let bcname = document.querySelector("#bcname");
+    let response = await fetch("/add_course", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bcname: bcname.value }),
+    });
+    if (response.ok) {
+        let data = await response.json();
+        if (data.detail == "success") {
+            alert("book is there");
+            // add a check next to add book to database and disable that button
+        }
+    }
+}
+
+// This checks on the task status from a previously scheduled task.
+// todo: how to report the status better
 function getStatus(taskID) {
     fetch(`/tasks/${taskID}`, {
         method: "GET",
