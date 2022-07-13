@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED 1
 # install dependencies
 RUN pip install --upgrade pip
 RUN apt update
-RUN apt install -y git texlive-full xsltproc pdf2svg
+RUN apt install -y git texlive-full xsltproc pdf2svg rsync
 #RUN pip install -r requirements.txt
 #RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 RUN pip install poetry
