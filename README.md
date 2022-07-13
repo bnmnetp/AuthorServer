@@ -1,6 +1,8 @@
-# Asynchronous Tasks with FastAPI and Celery
+# Author Server
 
-Example of how to handle background processes with FastAPI, Celery, and Docker.
+Give authors on Runestone Academy control of rebuilding and deploying their books.
+
+Using FastAPI, Celery, Redis, and docker to manage background tasks. Thanks to Michael Herman for the [excellent article](https://testdriven.io/blog/fastapi-and-celery/) that got me started on this project.
 
 ### Quick Start
 
