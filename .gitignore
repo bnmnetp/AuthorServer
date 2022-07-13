@@ -7,3 +7,5 @@ build
 *.pyc
 __pycache__
 .vscode
+.web-installed
+.worker-installed
