@@ -10,20 +10,22 @@
         <input id="bcname" type="text" name="bcname" onchange="checkDB(this)" />
         <br />
         <div class="taskbox">
-            <button type="button" onclick="addCourse()">
+            <button id="addcoursebutton" type="button" onclick="addCourse()">
                 Add Book to Database
             </button>
+            <span id="bookstatus"></span>
         </div>
         <label for="gitrepo">Github Repo URL</label>
         <input id="gitrepo" type="text" name="githubrepo" />
         <button type="button" onclick="cloneTask()">Clone Repo</button>
+        <button type="button" onclick="pullTask()">Pull Latest</button>
         <div class="taskbox">
-            <button type="button" onclick="buildTask()">
+            <button id="Runestone" type="button" onclick="buildTask(this)">
                 Build Runestone Book
             </button>
         </div>
         <div class="taskbox">
-            <button type="button" onclick="buildTask()">
+            <button id="PreTeXt" type="button" onclick="buildTask(this)">
                 Build PreTeXt Book
             </button>
         </div>

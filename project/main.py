@@ -1,13 +1,33 @@
+# ****************************************
+# |docname| - web ui endponits for authors
+# ****************************************
+#
+#
+# Imports
+# =======
+# These are listed in the order prescribed by `PEP 8`_.
+#
+# Standard library
+# ----------------
+import os
+
+# third party
+# -----------
 from fastapi import Body, FastAPI, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from worker import create_task, build_runestone_book, clone_runestone_book
 from celery.result import AsyncResult
-from sqlalchemy import create_engine
-import os
 from sqlalchemy import create_engine, Table, MetaData, select, and_, or_
 from sqlalchemy.orm.session import sessionmaker
+
+# Local App
+# ---------
+from worker import (
+    build_runestone_book,
+    clone_runestone_book,
+    build_ptx_book,
+)
 
 
 app = FastAPI()
@@ -37,7 +57,7 @@ def check_db(payload=Body(...)):
         courses = Table("courses", meta, autoload=True, autoload_with=engine)
         sel = select([courses]).where(courses.c.course_name == base_course)
         res = sess.execute(sel).first()
-        detail = res.get("id", False) if res else False
+        detail = res["id"] if res else False
         return JSONResponse({"detail": detail})
 
 
@@ -78,13 +98,20 @@ def do_clone(payload=Body(...)):
     return JSONResponse({"task_id": task.id})
 
 
-@app.post("/tasks", status_code=201)
-def run_task(payload=Body(...)):
-    task_type = payload["type"]
-    task = create_task.delay(int(task_type))
+@app.post("/buildBook", status_code=201)
+def do_build(payload=Body(...)):
+    bcname = payload["bcname"]
+    book_system = payload["book_system"]
+    if book_system == "Runestone":
+        task = build_runestone_book.delay(bcname)
+    else:
+        task = build_ptx_book.delay(bcname)
+
     return JSONResponse({"task_id": task.id})
 
 
+# Called from javascript to get the current status of a task
+#
 @app.get("/tasks/{task_id}")
 def get_status(task_id):
     task_result = AsyncResult(task_id)

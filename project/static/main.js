@@ -1,8 +1,9 @@
-// custom javascript
-
-(function () {
-    console.log("Sanity Check!");
-})();
+/*
+ * Javascript functions for Single Page App
+ * Author: Brad Miller
+ * Date: 2022-07-11
+ *
+ */
 
 function handleClick(type) {
     fetch("/tasks", {
@@ -37,6 +38,24 @@ function cloneTask() {
         });
 }
 
+// Schedule a task to build a book then follow its status
+function buildTask(el) {
+    let bcname = document.querySelector("#bcname");
+    fetch("/buildBook", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ book_system: el.id, bcname: bcname.value }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            getStatus(data.task_id);
+        });
+}
+
+function buildPTXTask() {}
+
 // see checkDB in main.py
 async function checkDB(el) {
     let response = await fetch("/book_in_db", {
@@ -48,9 +67,15 @@ async function checkDB(el) {
     });
     if (response.ok) {
         let data = await response.json();
-        if (data.detail == true) {
-            alert("book is there");
-            // add a check next to add book to database and disable that button
+        let bookstatus = document.querySelector("#bookstatus");
+        let addcoursebutton = document.querySelector("#addcoursebutton");
+        if (data.detail) {
+            bookstatus.innerHTML = "Book is in the Database";
+            addcoursebutton.disabled = true;
+        } else {
+            bookstatus.innerHTML =
+                "Please click the button to add this book to the database";
+            addcoursebutton.disabled = false;
         }
     }
 }

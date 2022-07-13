@@ -1,11 +1,31 @@
+# ***********************************
+# |docname| - Celery Worker Functions
+# ***********************************
+# Use celery worker functions for long running processes like building a book.
+#
+#
+# Imports
+# =======
+# These are listed in the order prescribed by `PEP 8`_.
+#
+# Standard library
+# ----------------
 import os
 import sys
 import time
 import subprocess
 import logging
 
-FASTBUILDER = 1
+# Third Party
+# -----------
+from celery import Celery
+
+# Local Application
+# -----------------
 from runestone.server.utils import _build_runestone_book, _build_ptx_book
+
+
+# Set up logging
 
 logger = logging.getLogger("runestone")
 handler = logging.StreamHandler(sys.stdout)
@@ -16,7 +36,18 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 
-from celery import Celery
+# Because we are reusing many functions also used by `rsmanage` to do various build tasks
+# I wanted a way to have the click status messages come back to the web UI.  So,
+# we will pass in our own version of click.echo to these functions that
+# uses the status functions of celery workers.
+# update state - https://www.distributedpython.com/2018/09/28/celery-task-states/#:~:text=The%20update_state%20method.%20The%20Celery%20task%20object%20provides,define%20your%20own%20state%20is%20a%20unique%20name.
+class MyClick:
+    def __init__(self, worker, state):
+        self.worker = worker
+        self.state = state
+
+    def echo(self, message):
+        self.worker.update_state(state=self.state, meta={"current": message})
 
 
 celery = Celery(__name__)
@@ -25,24 +56,14 @@ celery.conf.result_backend = os.environ.get(
     "CELERY_RESULT_BACKEND", "redis://localhost:6379"
 )
 
-
-@celery.task(bind=True, name="create_task")
-def create_task(self, task_type):
-    num = int(task_type)  # 1, 2, or 3
-    for i in range(num):
-        self.update_state(state="PROGRESS", meta={"current": i, "total": num})
-        time.sleep(10)
-    return True
-
-
-# update state - https://www.distributedpython.com/2018/09/28/celery-task-states/#:~:text=The%20update_state%20method.%20The%20Celery%20task%20object%20provides,define%20your%20own%20state%20is%20a%20unique%20name.
-
 # new worker
 # 1. pull from github for the given repo
 # 2. build
 # 3. Update the _static (for ptx)
 # 4. process manifest (for ptx)
 # 5. Update the library
+
+
 @celery.task(bind=True, name="clone_runestone_book")
 def clone_runestone_book(self, repo, bcname):
     self.update_state(state="CLONING", meta={"current": "cloning"})
@@ -84,7 +105,11 @@ def build_runestone_book(self, book):
     if res.returncode != 0:
         return False
 
+    self.update_state(state="BUILDING", meta={"current": "running build"})
+    os.chdir(f"/books/{book}")
     _build_runestone_book(book)
+
+    return True
 
 
 @celery.task(bind=True, name="build_ptx_book")
@@ -96,4 +121,7 @@ def build_ptx_book(self, book):
     if res.returncode != 0:
         return False
 
-    _build_runestone_book(book)
+    os.chdir(f"/books/{book}")
+    _build_ptx_book(book)
+
+    return True
