@@ -45,10 +45,20 @@ class MyClick:
     def __init__(self, worker, state):
         self.worker = worker
         self.state = state
+        logger.debug(f"MyClick worker is {self.worker}")
 
     def echo(self, message):
+        logger.debug(f"UPDATE State: {self.state} {message}")
         self.worker.update_state(state=self.state, meta={"current": message})
 
+
+# Mock the click config object. It is only used for dburl information in this context
+class Config:
+    def __init__(self):
+        self.dburl = os.environ["DEV_DBURL"]
+
+
+config = Config()
 
 celery = Celery(__name__)
 celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
@@ -105,9 +115,23 @@ def build_runestone_book(self, book):
     if res.returncode != 0:
         return False
 
+    myclick = MyClick(self, "BUILDING")
     self.update_state(state="BUILDING", meta={"current": "running build"})
     os.chdir(f"/books/{book}")
-    _build_runestone_book(book)
+    _build_runestone_book(book, click=myclick)
+
+    self.update_state(state="FINISHING", meta={"current": "changing permissions"})
+    res = subprocess.run(
+        f"chgrp -R www-data .", shell=True, capture_output=True, cwd=f"/books/{book}"
+    )
+    if res.returncode != 0:
+        return False
+    res = subprocess.run(
+        f"chmod -R go+rw .", shell=True, capture_output=True, cwd=f"/books/{book}"
+    )
+    if res.returncode != 0:
+        return False
+    self.update_state(state="SUCCESS", meta={"current": "build complete"})
 
     return True
 
@@ -122,6 +146,24 @@ def build_ptx_book(self, book):
         return False
 
     os.chdir(f"/books/{book}")
-    _build_ptx_book(book)
+    logger.debug(f"Before building myclick self = {self}")
+    myclick = MyClick(self, "PTXBUILD")
+    logger.debug("Starting build")
+    _build_ptx_book(config, False, "runestone-manifest.xml", book, click=myclick)
+
+    self.update_state(state="FINISHING", meta={"current": "updating permissions"})
+
+    res = subprocess.run(
+        f"chgrp -R www-data .", shell=True, capture_output=True, cwd=f"/books/{book}"
+    )
+    if res.returncode != 0:
+        return False
+    res = subprocess.run(
+        f"chmod -R go+rw .", shell=True, capture_output=True, cwd=f"/books/{book}"
+    )
+    if res.returncode != 0:
+        return False
+
+    self.update_state(state="SUCCESS", meta={"current": "build complete"})
 
     return True

@@ -110,15 +110,22 @@ function getStatus(taskID) {
     })
         .then((response) => response.json())
         .then((res) => {
-            console.log(res);
+            let d = new Date();
             const html = `
       <tr>
         <td>${taskID}</td>
+        <td>${d.toLocaleString()}
         <td>${res.task_status}</td>
         <td>${res.task_result.current}</td>
       </tr>`;
-            const newRow = document.getElementById("tasks").insertRow(0);
-            newRow.innerHTML = html;
+            let row = document.getElementById(`${taskID}`);
+            if (!row) {
+                const newRow = document.getElementById("tasks").insertRow(0);
+                newRow.id = `${taskID}`;
+                newRow.innerHTML = html;
+            } else {
+                row.innerHTML = html;
+            }
 
             const taskStatus = res.task_status;
             if (taskStatus === "SUCCESS" || taskStatus === "FAILURE")
