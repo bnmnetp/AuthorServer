@@ -39,14 +39,13 @@ function cloneTask() {
 }
 
 // Schedule a task to build a book then follow its status
-function buildTask(el) {
-    let bcname = document.querySelector("#bcname");
+function buildTask(bcname) {
     fetch("/buildBook", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ book_system: el.id, bcname: bcname.value }),
+        body: JSON.stringify({ bcname: bcname }),
     })
         .then((response) => response.json())
         .then((data) => {
@@ -96,6 +95,7 @@ async function addCourse() {
             alert("book is there");
             // add a check next to add book to database and disable that button
         }
+        cloneTask();
     }
 }
 

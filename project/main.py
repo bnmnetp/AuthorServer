@@ -10,16 +10,18 @@
 # Standard library
 # ----------------
 import os
+import pathlib
 
 # third party
 # -----------
-from fastapi import Body, FastAPI, Form, Request
+from fastapi import Body, FastAPI, Form, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from celery.result import AsyncResult
 from sqlalchemy import create_engine, Table, MetaData, select, and_, or_
 from sqlalchemy.orm.session import sessionmaker
+from fastapi_login import LoginManager
 
 # Local App
 # ---------
@@ -27,42 +29,89 @@ from worker import (
     build_runestone_book,
     clone_runestone_book,
     build_ptx_book,
+    deploy_book,
 )
+from models import Session, auth_user, courses, Book, BookAuthor
 
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+auth_manager = LoginManager("supersecret", "/auth/validate", use_cookie=True)
+auth_manager.cookie_name = "access_token"
+
+
+@auth_manager.user_loader()  # type: ignore
+def _load_user(user_id: str):
+    """
+    fetch a user object from the database. This is designed to work with the
+    original web2py auth_user schema but make it easier to migrate to a new
+    database by simply returning a user object.
+    """
+
+    return fetch_user(user_id)
+
+
+def fetch_user(user_id: str):
+    # Create an AuthUser object from the databae metadata
+    sel = select([auth_user]).where(auth_user.c.username == user_id)
+    with Session() as sess:
+        res = sess.execute(sel).first()
+        # res is a SqlAlchemy Row - you can access columns by position or by name
+        print(f"RES = {res}")
+        return res
+
+
+def fetch_books_by_author(author: str):
+    query = (
+        select(Book, BookAuthor)
+        .join(BookAuthor, BookAuthor.book == Book.document_id)
+        .where(BookAuthor.author == author)
+    )
+    with Session() as sess:
+        res = sess.execute(query).fetchall()
+        return res
+
+
+# Install the auth_manager as middleware This will make the user
+# part of the request ``request.state.user`` `See FastAPI_Login Advanced <https://fastapi-login.readthedocs.io/advanced_usage/>`_
+auth_manager.useRequest(app)
+
 
 @app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse("home.html", context={"request": request})
+async def home(request: Request, user=Depends(auth_manager)):
+    print(f"{request.state.user} OR user = {user}")
+    if user:
+        name = user.first_name
+        book_list = fetch_books_by_author(user.username)
+
+    else:
+        name = "unknown person"
+        book_list = []
+        # redirect them back somewhere....
+
+    return templates.TemplateResponse(
+        "home.html", context={"request": request, "name": name, "book_list": book_list}
+    )
 
 
 @app.post("/book_in_db")
-def check_db(payload=Body(...)):
+async def check_db(payload=Body(...)):
     base_course = payload["bcname"]
     # connect to db and check if book is there and if base_course == course_name
     if "DEV_DBURL" not in os.environ:
         return JSONResponse({"detail": "DBURL is not set"})
     else:
-        engine = create_engine(os.environ["DEV_DBURL"])
-        Session = sessionmaker()
-        engine.connect()
-        Session.configure(bind=engine)
-        sess = Session()
-        # If no exceptions are raised, then set up the database.
-        meta = MetaData()
-        courses = Table("courses", meta, autoload=True, autoload_with=engine)
         sel = select([courses]).where(courses.c.course_name == base_course)
-        res = sess.execute(sel).first()
-        detail = res["id"] if res else False
-        return JSONResponse({"detail": detail})
+        with Session() as sess:
+            res = sess.execute(sel).first()
+            detail = res["id"] if res else False
+            return JSONResponse({"detail": detail})
 
 
 @app.post("/add_course")
-def new_course(payload=Body(...)):
+async def new_course(payload=Body(...)):
     base_course = payload["bcname"]
     if "DEV_DBURL" not in os.environ:
         return JSONResponse({"detail": "DBURL is not set"})
@@ -83,7 +132,7 @@ def new_course(payload=Body(...)):
                 'T')
                 """
         )
-
+        # TODO: Add entry to book and book_author
         if res:
             return JSONResponse({"detail": "success"})
         else:
@@ -91,7 +140,7 @@ def new_course(payload=Body(...)):
 
 
 @app.post("/clone", status_code=201)
-def do_clone(payload=Body(...)):
+async def do_clone(payload=Body(...)):
     repourl = payload["url"]
     bcname = payload["bcname"]
     task = clone_runestone_book.delay(repourl, bcname)
@@ -99,9 +148,14 @@ def do_clone(payload=Body(...)):
 
 
 @app.post("/buildBook", status_code=201)
-def do_build(payload=Body(...)):
+async def do_build(payload=Body(...)):
     bcname = payload["bcname"]
-    book_system = payload["book_system"]
+    rstproj = pathlib.Path("/books") / bcname / "pavement.py"
+    ptxproj = pathlib.Path("/books") / bcname / "project.ptx"
+    if ptxproj.exists():
+        book_system = "PreTeXt"
+    else:
+        book_system = "Runestone"
     if book_system == "Runestone":
         task = build_runestone_book.delay(bcname)
     else:
@@ -110,10 +164,17 @@ def do_build(payload=Body(...)):
     return JSONResponse({"task_id": task.id})
 
 
+@app.post("/deployBook", status_code=201)
+async def do_deploy(payload=Body(...)):
+    bcname = payload["bcname"]
+    task = deploy_book.delay(bcname)
+    return JSONResponse({"task_id": task.id})
+
+
 # Called from javascript to get the current status of a task
 #
 @app.get("/tasks/{task_id}")
-def get_status(task_id):
+async def get_status(task_id):
     task_result = AsyncResult(task_id)
     result = {
         "task_id": task_id,

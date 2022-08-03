@@ -5,19 +5,46 @@
     <hr />
     <br />
     <div>
-        <h3>Tasks</h3>
+        <h3>Books by {{name}}</h3>
+        <table>
+            {% for book in book_list %}
+            <tr>
+                <td>{{book.Book.document_id}}</td>
+                <td>
+                    <button
+                        onclick="buildTask('{{book.Book.document_id}}')"
+                        type="button"
+                    >
+                        Build
+                    </button>
+                </td>
+                <td>
+                    <button
+                        onclick="deployTask('{{book.Book.document_id}}')"
+                        type="button"
+                    >
+                        Deploy
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <br />
+        <h3>Add a New Book</h3>
         <label for="bcname">Your document id / basecourse name</label>
         <input id="bcname" type="text" name="bcname" onchange="checkDB(this)" />
         <br />
+        <label for="gitrepo">Github Repo URL</label>
+        <input id="gitrepo" type="text" name="githubrepo" /> (Must use https url
+        not ssh)
         <div class="taskbox">
             <button id="addcoursebutton" type="button" onclick="addCourse()">
-                Add Book to Database
+                Add Book to Runestone
             </button>
             <span id="bookstatus"></span>
         </div>
-        <label for="gitrepo">Github Repo URL</label>
-        <input id="gitrepo" type="text" name="githubrepo" />
-        <button type="button" onclick="cloneTask()">Clone Repo</button>
+        <!-- <button type="button" onclick="cloneTask()">Clone Repo</button>
+
         <button type="button" onclick="pullTask()">Pull Latest</button>
         <div class="taskbox">
             <button id="Runestone" type="button" onclick="buildTask(this)">
@@ -39,7 +66,7 @@
                 Deploy to All Servers
             </button>
         </div>
-    </div>
+    --></div>
     <br /><br />
     <div>
         <h3>Task Status</h3>
