@@ -82,12 +82,13 @@ async function checkDB(el) {
 // see new_course in main.py
 async function addCourse() {
     let bcname = document.querySelector("#bcname");
+    let repo = document.querySelector("#gitrepo");
     let response = await fetch("/add_course", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ bcname: bcname.value }),
+        body: JSON.stringify({ bcname: bcname.value, github: repo.value }),
     });
     if (response.ok) {
         let data = await response.json();

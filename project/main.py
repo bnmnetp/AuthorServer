@@ -11,6 +11,7 @@
 # ----------------
 import os
 import pathlib
+import datetime
 
 # third party
 # -----------
@@ -74,6 +75,18 @@ def fetch_books_by_author(author: str):
         return res
 
 
+def create_book_entry(author: str, document_id: str, github: str):
+    new_book = Book(
+        document_id=document_id,
+        github_url=github,
+        last_build=datetime.datetime.utcnow(),
+    )
+    new_ba = BookAuthor(author=author, book=document_id)
+    with Session.begin() as session:
+        session.add(new_book)
+        session.add(new_ba)
+
+
 # Install the auth_manager as middleware This will make the user
 # part of the request ``request.state.user`` `See FastAPI_Login Advanced <https://fastapi-login.readthedocs.io/advanced_usage/>`_
 auth_manager.useRequest(app)
@@ -111,8 +124,9 @@ async def check_db(payload=Body(...)):
 
 
 @app.post("/add_course")
-async def new_course(payload=Body(...)):
+async def new_course(payload=Body(...), user=Depends(auth_manager)):
     base_course = payload["bcname"]
+    github_url = payload["github"]
     if "DEV_DBURL" not in os.environ:
         return JSONResponse({"detail": "DBURL is not set"})
     else:
@@ -132,7 +146,7 @@ async def new_course(payload=Body(...)):
                 'T')
                 """
         )
-        # TODO: Add entry to book and book_author
+        create_book_entry(user.username, base_course, github_url)
         if res:
             return JSONResponse({"detail": "success"})
         else:
