@@ -6,7 +6,13 @@
     <br />
     <div>
         <h3>Books by {{name}}</h3>
-        <table>
+        <table id="booktable" class="booktbl table">
+            <tr>
+                <td><strong>document-id/basecourse</strong></td>
+                <td></td>
+                <td></td>
+                <td><strong>Last Build</strong></td>
+            </tr>
             {% for book in book_list %}
             <tr>
                 <td>{{book.Book.document_id}}</td>
@@ -14,6 +20,7 @@
                     <button
                         onclick="buildTask('{{book.Book.document_id}}')"
                         type="button"
+                        class="btn btn-primary"
                     >
                         Build
                     </button>
@@ -22,10 +29,12 @@
                     <button
                         onclick="deployTask('{{book.Book.document_id}}')"
                         type="button"
+                        class="btn btn-success"
                     >
                         Deploy
                     </button>
                 </td>
+                <td>{{book.Book.last_build}}</td>
             </tr>
             {% endfor %}
         </table>
@@ -38,7 +47,12 @@
         <input id="gitrepo" type="text" name="githubrepo" /> (Must use https url
         not ssh)
         <div class="taskbox">
-            <button id="addcoursebutton" type="button" onclick="addCourse()">
+            <button
+                id="addcoursebutton"
+                type="button"
+                onclick="addCourse()"
+                class="btn btn-primary"
+            >
                 Add Book to Runestone
             </button>
             <span id="bookstatus"></span>

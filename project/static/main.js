@@ -79,10 +79,19 @@ async function checkDB(el) {
     }
 }
 
+// This function is called when the "Add Book to Runestone" button is pressed
 // see new_course in main.py
 async function addCourse() {
     let bcname = document.querySelector("#bcname");
+    if (!bcname.value) {
+        alert("You must provide a document-id or base course");
+        return;
+    }
     let repo = document.querySelector("#gitrepo");
+    if (!repo.value) {
+        alert("You must provide a document-id or base course");
+        return;
+    }
     let response = await fetch("/add_course", {
         method: "POST",
         headers: {
@@ -93,13 +102,46 @@ async function addCourse() {
     if (response.ok) {
         let data = await response.json();
         if (data.detail == "success") {
-            alert("book is there");
-            // add a check next to add book to database and disable that button
         }
         cloneTask();
+        // if clone fails we should remove from db? - maybe add a remove button?
+        // check for repo to be present.
+        let i = 0;
+        let iid = setInterval(async function () {
+            let res = await getRepoStatus(bcname.value);
+            if (res) {
+                // add row for the new book.
+                let row = document.createElement("tr");
+                row.innerHTML = `<td>${bcname.value}</td>
+                            <td><button onclick="buildTask('${bcname.value}')" type="button">Build</button></td>
+                            <td><button onclick="deployTask('${bcname.value}')" type="button">Deploy</button></td>`;
+                let tbl = document.getElementById("booktable");
+                tbl.appendChild(row);
+                clearInterval(iid);
+            }
+            i++;
+            if (i >= 10) {
+                clearInterval(iid);
+            }
+        }, 1000);
     }
 }
-
+async function getRepoStatus(bcname) {
+    let response = await fetch("/isCloned", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bcname: bcname }),
+    });
+    if (response.ok) {
+        let data = await response.json();
+        if (data.detail == true) {
+            return true;
+        }
+    }
+    return false;
+}
 // This checks on the task status from a previously scheduled task.
 // todo: how to report the status better
 function getStatus(taskID) {

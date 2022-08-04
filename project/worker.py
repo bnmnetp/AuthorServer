@@ -10,11 +10,14 @@
 #
 # Standard library
 # ----------------
+import datetime
 import os
 import sys
 import time
 import subprocess
 import logging
+from models import Session, auth_user, courses, Book, BookAuthor
+from sqlalchemy import update
 
 # Third Party
 # -----------
@@ -106,6 +109,16 @@ def clone_runestone_book(self, repo, bcname):
     return True
 
 
+def update_last_build(book):
+    stmt = (
+        update(Book)
+        .where((Book.document_id == book))
+        .values(last_build=datetime.datetime.utcnow())
+    )
+    with Session.begin() as session:
+        session.execute(stmt)
+
+
 @celery.task(bind=True, name="build_runestone_book")
 def build_runestone_book(self, book):
     logger.debug(f"Building {book}")
@@ -133,7 +146,7 @@ def build_runestone_book(self, book):
     if res.returncode != 0:
         return False
     self.update_state(state="SUCCESS", meta={"current": "build complete"})
-
+    update_last_build(book)
     return True
 
 
@@ -167,7 +180,7 @@ def build_ptx_book(self, book):
         return False
 
     self.update_state(state="SUCCESS", meta={"current": "build complete"})
-
+    update_last_build(book)
     return True
 
 

@@ -161,6 +161,16 @@ async def do_clone(payload=Body(...)):
     return JSONResponse({"task_id": task.id})
 
 
+@app.post("/isCloned", status_code=201)
+async def check_repo(payload=Body(...)):
+    bcname = payload["bcname"]
+    repo_path = pathlib.Path("/books", bcname)
+    if repo_path.exists():
+        return JSONResponse({"detail": True})
+    else:
+        return JSONResponse({"detail": False})
+
+
 @app.post("/buildBook", status_code=201)
 async def do_build(payload=Body(...)):
     bcname = payload["bcname"]
