@@ -121,8 +121,8 @@ async def home(request: Request, user=Depends(auth_manager)):
 
 
 @app.get("/notauthorized")
-def not_authorized():
-    return templates.TemplateResponse("notauthorized.html")
+def not_authorized(request: Request):
+    return templates.TemplateResponse("notauthorized.html", context={"request": request})
 
 
 @app.post("/book_in_db")
