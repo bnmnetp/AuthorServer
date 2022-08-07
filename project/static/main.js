@@ -126,6 +126,21 @@ async function addCourse() {
         }, 1000);
     }
 }
+
+function deployTask(bcname) {
+    fetch("/deployBook", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bcname: bcname }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            getStatus(data.task_id);
+        });
+}
+
 async function getRepoStatus(bcname) {
     let response = await fetch("/isCloned", {
         method: "POST",
