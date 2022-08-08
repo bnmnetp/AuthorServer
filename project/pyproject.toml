@@ -20,9 +20,8 @@ runestone = ">=6.3.0,<7.0"
 SQLAlchemy = "^1.4.39"
 psycopg2-binary = "^2.9.3"
 fastapi-login = "^1.8.2"
-
-[tool.poetry.dev-dependencies]
-runestone = { path = "../RunestoneComponents", develop = true }
+myst-parser = "^0.18.0"                                                                                                    
+sphinx-reredirects = "^0.1.1" 
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
