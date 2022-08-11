@@ -192,9 +192,9 @@ def deploy_book(self, book):
     user = "bmiller"
     self.update_state(state="STARTING", meta={"current": "pull latest"})
     numServers = int(os.environ["NUM_SERVERS"].strip())
-    
-    for i in range(1, numServers+1):
-        command = f"rsync -e 'ssh -oStrictHostKeyChecking=no -i /usr/src/app/.ssh/id_rsa' -P -rzc /books/{book} {user}@server{i}:~/Runestone/books --delete"
+
+    for i in range(1, numServers + 1):
+        command = f"rsync -e 'ssh -oStrictHostKeyChecking=no -i /usr/src/app/.ssh/id_rsa' -P -rzc /books/{book} {user}@server{i}:~/Runestone/books --copy-links --delete"
         logger.debug(command)
         self.update_state(state="DEPLOYING", meta={"current": f"server{i}"})
         res = subprocess.run(
@@ -206,5 +206,5 @@ def deploy_book(self, book):
             logger.debug(res.stdout)
             logger.debug(res.stderr)
             return False
-    self.update_state(state="FINISHED", meta={"current": f"success"})        
+    self.update_state(state="FINISHED", meta={"current": f"success"})
     return True
