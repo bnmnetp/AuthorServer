@@ -34,6 +34,15 @@
                         Deploy
                     </button>
                 </td>
+                <td>
+                    <button
+                        onclick="showLog('{{book.Book.document_id}}')"
+                        type="button"
+                        class="btn btn-success"
+                    >
+                        Show last log
+                    </button>
+                </td>
                 <td>{{book.Book.last_build}}</td>
             </tr>
             {% endfor %}
@@ -56,31 +65,10 @@
                 Add Book to Runestone
             </button>
             <span id="bookstatus"></span>
-        </div>
-        <!-- <button type="button" onclick="cloneTask()">Clone Repo</button>
-
-        <button type="button" onclick="pullTask()">Pull Latest</button>
-        <div class="taskbox">
-            <button id="Runestone" type="button" onclick="buildTask(this)">
-                Build Runestone Book
-            </button>
-        </div>
-        <div class="taskbox">
-            <button id="PreTeXt" type="button" onclick="buildTask(this)">
-                Build PreTeXt Book
-            </button>
-        </div>
-        <div class="taskbox">
-            <button type="button" onclick="ViewBook()">
-                View Book in New Tab
-            </button>
-        </div>
-        <div class="taskbox">
-            <button type="button" onclick="deployTask()">
-                Deploy to All Servers
-            </button>
-        </div>
-    --></div>
+    <div>
+        <pre id="lastlog">
+        </pre>
+    </div>
     <br /><br />
     <div>
         <h3>Task Status</h3>

@@ -15,6 +15,7 @@ import datetime
 
 # third party
 # -----------
+import aiofiles
 from fastapi import Body, FastAPI, Form, Request, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -95,17 +96,19 @@ auth_manager.useRequest(app)
 @app.get("/")
 async def home(request: Request, user=Depends(auth_manager)):
     print(f"{request.state.user} OR user = {user}")
-    with Session() as sess:
-        auth_row = sess.execute(
-            """select * from auth_group where role = 'author'"""
-        ).first()
-        auth_group_id = auth_row[0]
-        is_author = sess.execute(
-            f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
-        ).first()
-    if not is_author:
-        return RedirectResponse(url="/notauthorized")
-
+    try:
+        with Session() as sess:
+            auth_row = sess.execute(
+                """select * from auth_group where role = 'author'"""
+            ).first()
+            auth_group_id = auth_row[0]
+            is_author = sess.execute(
+                f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
+            ).first()
+        if not is_author:
+            return RedirectResponse(url="/notauthorized")
+    except:
+        print("database problem...")
     if user:
         name = user.first_name
         book_list = fetch_books_by_author(user.username)
@@ -120,9 +123,24 @@ async def home(request: Request, user=Depends(auth_manager)):
     )
 
 
+@app.get("/getlog/{book}")
+async def getlog(request: Request, book):
+    logpath = pathlib.Path("/books", book, "cli.log")
+
+    if logpath.exists():
+        async with aiofiles.open(logpath, "rb") as f:
+            result = await f.read()
+            result = result.decode("utf8")
+    else:
+        result = "No logfile found"
+    return JSONResponse({"detail": result})
+
+
 @app.get("/notauthorized")
 def not_authorized(request: Request):
-    return templates.TemplateResponse("notauthorized.html", context={"request": request})
+    return templates.TemplateResponse(
+        "notauthorized.html", context={"request": request}
+    )
 
 
 @app.post("/book_in_db")

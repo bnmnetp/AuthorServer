@@ -16,6 +16,7 @@ import sys
 import time
 import subprocess
 import logging
+import pathlib
 from models import Session, auth_user, courses, Book, BookAuthor
 from sqlalchemy import update
 
@@ -84,8 +85,13 @@ def clone_runestone_book(self, repo, bcname):
     cwd = os.getcwd()
     try:
         res = subprocess.run(
-            f"git clone {repo}", shell=True, capture_output=True, cwd="/books"
+            ["git", "clone", repo, bcname], capture_output=True, cwd="/books"
         )
+        outputlog = pathlib.Path("/books", bcname, "buildlog.txt")
+        with open(outputlog, "w") as olfile:
+            olfile.write(res.stdout)
+            olfile.write("\n====\n")
+            olfile.write(res.stderr)
         if res.returncode != 0:
             err = res.stderr.decode("utf8")
             logger.debug(f"ERROR: {err}")
@@ -123,18 +129,19 @@ def update_last_build(book):
 def build_runestone_book(self, book):
     logger.debug(f"Building {book}")
     self.update_state(state="CHECKING", meta={"current": "pull latest"})
-    res = subprocess.run(
-        f"git pull", shell=True, capture_output=True, cwd=f"/books/{book}"
-    )
+    res = subprocess.run(["git", "pull"], capture_output=True, cwd=f"/books/{book}")
     if res.returncode != 0:
         return False
 
     myclick = MyClick(self, "BUILDING")
     self.update_state(state="BUILDING", meta={"current": "running build"})
     os.chdir(f"/books/{book}")
-    _build_runestone_book(book, click=myclick)
+    res = _build_runestone_book(book, click=myclick)
+    if res:
+        self.update_state(state="FINISHING", meta={"current": "changing permissions"})
+    else:
+        self.update_state(state="BUILDING", meta={"current": "Build failed -- see log"})
 
-    self.update_state(state="FINISHING", meta={"current": "changing permissions"})
     res = subprocess.run(
         f"chgrp -R www-data .", shell=True, capture_output=True, cwd=f"/books/{book}"
     )
@@ -164,9 +171,12 @@ def build_ptx_book(self, book):
     logger.debug(f"Before building myclick self = {self}")
     myclick = MyClick(self, "PTXBUILD")
     logger.debug("Starting build")
-    _build_ptx_book(config, False, "runestone-manifest.xml", book, click=myclick)
-
-    self.update_state(state="FINISHING", meta={"current": "updating permissions"})
+    res = _build_ptx_book(config, False, "runestone-manifest.xml", book, click=myclick)
+    if res:
+        self.update_state(state="FINISHING", meta={"current": "updating permissions"})
+    else:
+        self.update_state(state="BUILDING", meta={"current": "Failed - see log"})
+        return False
 
     res = subprocess.run(
         f"chgrp -R www-data .", shell=True, capture_output=True, cwd=f"/books/{book}"

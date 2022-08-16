@@ -157,6 +157,22 @@ async function getRepoStatus(bcname) {
     }
     return false;
 }
+
+function showLog(book) {
+    fetch(`/getlog/${book}`, {
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json",
+    },
+})
+    .then((response) => response.json())
+    .then((res) => {
+        let d = new Date();
+        let log = document.getElementById("lastlog")
+        log.innerHTML = res.detail;
+    })
+    .catch((err) => console.log(err));    
+}
 // This checks on the task status from a previously scheduled task.
 // todo: how to report the status better
 function getStatus(taskID) {
