@@ -18,5 +18,5 @@ RUN pip install poetry
 
 # copy project
 COPY . .
-COPY $HOME/.ssh/id_rsa .
-#RUN poetry install
+COPY .ssh/id_rsa .
+RUN /usr/local/bin/poetry install
