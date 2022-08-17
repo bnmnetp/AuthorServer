@@ -9,3 +9,4 @@ __pycache__
 .vscode
 .web-installed
 .worker-installed
+.ssh

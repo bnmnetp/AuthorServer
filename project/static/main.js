@@ -168,10 +168,16 @@ function showLog(book) {
     .then((response) => response.json())
     .then((res) => {
         let d = new Date();
-        let log = document.getElementById("lastlog")
+        let log = document.getElementById("lastlog");
+        let div = document.getElementById("lastdiv");
+        div.style.display = "block";
         log.innerHTML = res.detail;
     })
     .catch((err) => console.log(err));    
+}
+
+function hideLog() {
+    document.getElementById("lastdiv").style.display = 'none';
 }
 // This checks on the task status from a previously scheduled task.
 // todo: how to report the status better
