@@ -96,19 +96,17 @@ auth_manager.useRequest(app)
 @app.get("/")
 async def home(request: Request, user=Depends(auth_manager)):
     print(f"{request.state.user} OR user = {user}")
-    try:
-        with Session() as sess:
-            auth_row = sess.execute(
-                """select * from auth_group where role = 'author'"""
-            ).first()
-            auth_group_id = auth_row[0]
-            is_author = sess.execute(
-                f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
-            ).first()
-        if not is_author:
-            return RedirectResponse(url="/notauthorized")
-    except:
-        print("database problem...")
+    with Session() as sess:
+        auth_row = sess.execute(
+            """select * from auth_group where role = 'author'"""
+        ).first()
+        auth_group_id = auth_row[0]
+        is_author = sess.execute(
+            f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
+        ).first()
+    if not is_author:
+        return RedirectResponse(url="/notauthorized")
+
     if user:
         name = user.first_name
         book_list = fetch_books_by_author(user.username)
