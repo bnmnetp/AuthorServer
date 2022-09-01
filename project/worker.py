@@ -59,7 +59,15 @@ class MyClick:
 # Mock the click config object. It is only used for dburl information in this context
 class Config:
     def __init__(self):
-        self.dburl = os.environ["DEV_DBURL"]
+        conf = os.environ.get("WEB2PY_CONFIG", "production")
+        if conf == "production":
+            self.dburl = os.environ.get("DBURL")
+        elif conf == "development":
+            self.dburl = os.environ.get("DEV_DBURL")
+        elif conf == "test":
+            self.dburl = os.environ.get("TEST_DBURL")
+        else:
+            print("Incorrect WEB2PY_CONFIG")
 
 
 config = Config()
@@ -216,5 +224,5 @@ def deploy_book(self, book):
             logger.debug(res.stdout)
             logger.debug(res.stderr)
             return False
-    self.update_state(state="FINISHED", meta={"current": f"success"})
+    self.update_state(state="SUCCESS", meta={"current": f"deploy complete"})
     return True
