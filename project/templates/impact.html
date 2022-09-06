@@ -20,6 +20,15 @@
       vegaEmbed('#vis', enrollData);
   </script>
 
+<h1>Weekly Usage Patterns</h1>
+<p>Note click on any row in the heatmap to drill into details for that chapter</p>
+  <div id="chapterheat"></div>
+
+<script>
+    var chapterData = {{chapterData|safe}}
+    vegaEmbed('#chapterheat', chapterData);
+</script>
+
 </div>
 
 {% endblock %}

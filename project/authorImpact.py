@@ -97,6 +97,8 @@ def get_enrollment_graph(BASECOURSE):
 
 
 def get_pv_heatmap(BASECOURSE):
+    dburl = os.environ.get("DEV_DBURL")
+    eng = create_engine(dburl)
     pv = pd.read_sql_query(
         f"select * from page_views where base_course = '{BASECOURSE}'", eng
     )
