@@ -156,7 +156,7 @@ def subchapmap(request: Request, chapter: str, book: str, user=Depends(auth_mana
     chapterHM = get_subchap_heatmap(chapter, book)
     return templates.TemplateResponse(
         "subchapmap.html",
-        context={"request": request, "chapterData": chapterHM},
+        context={"request": request, "subchapData": chapterHM},
     )
 
 
