@@ -174,7 +174,7 @@ def get_subchap_heatmap(chapter, BASECOURSE):
             svg,
             title="Weekly Page Activity",
             width=svg.week.nunique() * 25,
-            height=svg.chapter_name.nunique() * 25,
+            height=svg.sub_chapter_name.nunique() * 25,
         )
         .mark_rect()
         .encode(
