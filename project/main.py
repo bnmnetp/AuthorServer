@@ -153,10 +153,10 @@ def subchapmap(request: Request, chapter: str, book: str, user=Depends(auth_mana
     else:
         return RedirectResponse(url="/notauthorized")
 
-    chapterHM = get_subchap_heatmap(book)
+    chapterHM = get_subchap_heatmap(chapter, book)
     return templates.TemplateResponse(
-        "impact.html",
-        context={"request": request, "enrollData": resGraph, "chapterData": chapterHM},
+        "subchapmap.html",
+        context={"request": request, "chapterData": chapterHM},
     )
 
 
