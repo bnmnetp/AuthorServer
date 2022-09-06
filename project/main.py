@@ -34,7 +34,7 @@ from worker import (
     deploy_book,
 )
 from models import Session, auth_user, courses, Book, BookAuthor
-from authorImpact import get_enrollment_graph, get_pv_heatmap
+from authorImpact import get_enrollment_graph, get_pv_heatmap, get_subchap_heatmap
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
