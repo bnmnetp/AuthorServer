@@ -100,21 +100,11 @@ def get_pv_heatmap(BASECOURSE):
     dburl = os.environ.get("DEV_DBURL")
     eng = create_engine(dburl)
     pv = pd.read_sql_query(
-        f"select * from page_views where base_course = '{BASECOURSE}'", eng
+        f"select base_course, chapter, chapter_name, week, count(*) as page_views from page_views where base_course = '{BASECOURSE}' group by base_course, chapter, chapter_name, week;",
+        eng,
     )
-
     pv["chap_num"] = pv.chapter_name.map(lambda x: int(x.split(".")[0]))
     pv["subchap_url"] = pv.chapter.map(lambda x: f"/subchapmap/{x}/{BASECOURSE}")
-
-    pvg = (
-        pv.groupby(["chapter_name", "week"])
-        .agg(
-            page_views=("base_course", "count"),
-            chapter_num=("chap_num", "min"),
-            drilldown_url=("subchap_url", "min"),
-        )
-        .reset_index()
-    )
 
     y_order = alt.EncodingSortField(
         field="chapter_num",  # The field to use for the sort
@@ -128,7 +118,7 @@ def get_pv_heatmap(BASECOURSE):
             y=alt.Y("chapter_name", sort=y_order),
             color=alt.Color("page_views", scale=alt.Scale(scheme="lightgreyteal")),
             tooltip="page_views",
-            href="drilldown_url",
+            href="subchap_url",
         )
         .configure_axis(labelFontSize=14)
         .configure_view(step=25)
