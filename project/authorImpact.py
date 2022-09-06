@@ -107,7 +107,7 @@ def get_pv_heatmap(BASECOURSE):
     pv["subchap_url"] = pv.chapter.map(lambda x: f"/subchapmap/{x}/{BASECOURSE}")
 
     y_order = alt.EncodingSortField(
-        field="chapter_num",  # The field to use for the sort
+        field="chap_num",  # The field to use for the sort
         order="ascending",  # The order to sort in
     )
     chap_heat = (
