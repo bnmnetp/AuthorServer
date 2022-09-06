@@ -121,12 +121,7 @@ def get_pv_heatmap(BASECOURSE):
         order="ascending",  # The order to sort in
     )
     chap_heat = (
-        alt.Chart(
-            pvg,
-            title="Weekly Chapter Activity",
-            width=pvg.week.nunique() * 25,
-            height=pvg.chapter_name.nunique() * 25,
-        )
+        alt.Chart(pvg, title="Weekly Chapter Activity")
         .mark_rect()
         .encode(
             x="week:O",
@@ -136,6 +131,7 @@ def get_pv_heatmap(BASECOURSE):
             href="drilldown_url",
         )
         .configure_axis(labelFontSize=14)
+        .configure_view(step=25)
     )
 
     return chap_heat.to_json()
@@ -170,12 +166,7 @@ def get_subchap_heatmap(chapter, BASECOURSE):
         order="ascending",  # The order to sort in
     )
     hm = (
-        alt.Chart(
-            svg,
-            title="Weekly Page Activity",
-            width=svg.week.nunique() * 25,
-            height=svg.sub_chapter_name.nunique() * 25,
-        )
+        alt.Chart(svg, title="Weekly Page Activity")
         .mark_rect()
         .encode(
             x="week:O",
@@ -184,6 +175,7 @@ def get_subchap_heatmap(chapter, BASECOURSE):
             tooltip="page_views",
         )
         .configure_axis(labelFontSize=14)
+        .configure_view(step=25)
     )
 
     return hm.to_json()
