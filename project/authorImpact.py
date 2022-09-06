@@ -111,7 +111,7 @@ def get_pv_heatmap(BASECOURSE):
         order="ascending",  # The order to sort in
     )
     chap_heat = (
-        alt.Chart(pvg, title="Weekly Chapter Activity")
+        alt.Chart(pv, title="Weekly Chapter Activity")
         .mark_rect()
         .encode(
             x="week:O",
