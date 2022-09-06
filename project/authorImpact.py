@@ -136,6 +136,8 @@ def get_pv_heatmap(BASECOURSE):
 
 
 def get_subchap_heatmap(chapter, BASECOURSE):
+    dburl = os.environ.get("DEV_DBURL")
+    eng = create_engine(dburl)
     pv = pd.read_sql_query(
         f"select * from page_views where base_course = '{BASECOURSE} and chapter = '{chapter}'",
         eng,
