@@ -104,7 +104,7 @@ def get_pv_heatmap(BASECOURSE):
     )
 
     pv["chap_num"] = pv.chapter_name.map(lambda x: int(x.split(".")[0]))
-    pv["subchap_url"] = pv.chapter.map(lambda x: f"/main/subchapmap/{x}")
+    pv["subchap_url"] = pv.chapter.map(lambda x: f"/subchapmap/{x}/{BASECOURSE}")
 
     pvg = (
         pv.groupby(["chapter_name", "week"])
@@ -135,14 +135,14 @@ def get_pv_heatmap(BASECOURSE):
     return chap_heat.to_json()
 
 
-def get_subchap_meatmap(subchap, BASECOURSE):
+def get_subchap_heatmap(chapter, BASECOURSE):
     pv = pd.read_sql_query(
-        f"select * from page_views where base_course = '{BASECOURSE}'", eng
+        f"select * from page_views where base_course = '{BASECOURSE} and chapter = '{chapter}'",
+        eng,
     )
     pv["subchapnum"] = pv.sub_chapter_name.map(lambda x: x.split()[0])
     svg = (
-        pv[pv.chapter == "GeneralIntro"]
-        .groupby(["sub_chapter_name", "week"])
+        pv.groupby(["sub_chapter_name", "week"])
         .agg(page_views=("base_course", "count"), subchap_num=("subchapnum", "min"))
         .reset_index()
     )

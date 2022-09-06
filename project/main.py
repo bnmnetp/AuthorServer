@@ -143,6 +143,21 @@ def impact(request: Request, book: str, user=Depends(auth_manager)):
         context={"request": request, "enrollData": resGraph, "chapterData": chapterHM},
     )
 
+@app.get("/subchapmap/{chapter}/{book}")
+    def impact(request: Request, chapter: str, book: str, user=Depends(auth_manager)):
+        # check for author status
+        if user:
+            if not verify_author(user):
+                return RedirectResponse(url="/notauthorized")
+        else:
+            return RedirectResponse(url="/notauthorized")
+    
+        chapterHM = get_subchap_heatmap(book)
+        return templates.TemplateResponse(
+            "impact.html",
+            context={"request": request, "enrollData": resGraph, "chapterData": chapterHM},
+        )
+
 
 @app.get("/getlog/{book}")
 async def getlog(request: Request, book):
