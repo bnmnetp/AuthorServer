@@ -34,7 +34,7 @@ from worker import (
     deploy_book,
 )
 from models import Session, auth_user, courses, Book, BookAuthor
-
+from authorImpact import get_enrollment_graph
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -96,16 +96,10 @@ auth_manager.useRequest(app)
 @app.get("/")
 async def home(request: Request, user=Depends(auth_manager)):
     print(f"{request.state.user} OR user = {user}")
-    with Session() as sess:
-        auth_row = sess.execute(
-            """select * from auth_group where role = 'author'"""
-        ).first()
-        auth_group_id = auth_row[0]
-        is_author = sess.execute(
-            f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
-        ).first()
-    if not is_author:
-        return RedirectResponse(url="/notauthorized")
+
+    if user:
+        if not verify_author(user):
+            return RedirectResponse(url="/notauthorized")
 
     if user:
         name = user.first_name
@@ -118,6 +112,34 @@ async def home(request: Request, user=Depends(auth_manager)):
 
     return templates.TemplateResponse(
         "home.html", context={"request": request, "name": name, "book_list": book_list}
+    )
+
+
+def verify_author(user):
+    with Session() as sess:
+        auth_row = sess.execute(
+            """select * from auth_group where role = 'author'"""
+        ).first()
+        auth_group_id = auth_row[0]
+        is_author = sess.execute(
+            f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
+        ).first()
+    return is_author
+
+
+@app.get("/impact/{book}")
+def impact(request: Request, book: str, user=Depends(auth_manager)):
+    # check for author status
+    if user:
+        if not verify_author(user):
+            return RedirectResponse(url="/notauthorized")
+    else:
+        return RedirectResponse(url="/notauthorized")
+
+    resGraph = get_enrollment_graph(book)
+
+    return templates.TemplateResponse(
+        "impact.html", context={"request": request, "enrollData": resGraph}
     )
 
 
