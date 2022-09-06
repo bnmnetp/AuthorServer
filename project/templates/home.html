@@ -11,6 +11,8 @@
         <td><strong>document-id/basecourse</strong></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td></td>
         <td><strong>Last Build</strong></td>
       </tr>
       {% for book in book_list %}
@@ -42,6 +44,11 @@
           >
             Show last log
           </button>
+        </td>
+        <td>
+          <a role="button" class="btn btn-info"
+            href="/impact/{{book.Book.document_id}}"
+            >Student Impact</a>
         </td>
         <td>{{book.Book.last_build}}</td>
       </tr>

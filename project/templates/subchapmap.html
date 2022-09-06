@@ -12,22 +12,14 @@
     <!-- Import vega-embed -->
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
   
-  <h1>Registered Student Adoptions</h1>
+  <h1>Subchapter activity</h1>
   <div id="vis"></div>
   
   <script>
-      var enrollData = {{enrollData|safe}}
-      vegaEmbed('#vis', enrollData);
+      var subchapData = {{subchapData|safe}}
+      vegaEmbed('#vis', subchapData);
   </script>
 
-<h1>Weekly Usage Patterns</h1>
-<p>Note click on any row in the heatmap to drill into details for that chapter</p>
-  <div id="chapterheat"></div>
-
-<script>
-    var chapterData = {{chapterData|safe}}
-    vegaEmbed('#chapterheat', chapterData);
-</script>
 
 </div>
 
