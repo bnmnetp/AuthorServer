@@ -135,11 +135,19 @@ def get_pv_heatmap(BASECOURSE):
     return chap_heat.to_json()
 
 
+def get_subchap_num(x):
+    parts = x.split(".")
+    if len(parts) > 1:
+        return int(parts[1])
+    else:
+        return 999
+
+
 def get_subchap_heatmap(chapter, BASECOURSE):
     dburl = os.environ.get("DEV_DBURL")
     eng = create_engine(dburl)
     pv = pd.read_sql_query(
-        f"select * from page_views where base_course = '{BASECOURSE} and chapter = '{chapter}'",
+        f"select * from page_views where base_course = '{BASECOURSE}' and chapter = '{chapter}'",
         eng,
     )
     pv["subchapnum"] = pv.sub_chapter_name.map(lambda x: x.split()[0])
@@ -149,7 +157,7 @@ def get_subchap_heatmap(chapter, BASECOURSE):
         .reset_index()
     )
 
-    svg["subchap_num"] = svg.subchap_num.map(lambda x: int(x.split(".")[1]))
+    svg["subchap_num"] = svg.subchap_num.map(get_subchap_num)
 
     y_order = alt.EncodingSortField(
         field="subchap_num",  # The field to use for the sort
