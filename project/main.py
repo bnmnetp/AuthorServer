@@ -40,7 +40,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-auth_manager = LoginManager("supersecret", "/auth/validate", use_cookie=True)
+# make sure to set this in production
+secret = os.environ.get("JWT_SECRET", "supersecret")
+auth_manager = LoginManager(secret, "/auth/validate", use_cookie=True)
 auth_manager.cookie_name = "access_token"
 
 
