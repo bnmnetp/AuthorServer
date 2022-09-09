@@ -4,6 +4,7 @@
  * Date: 2022-07-11
  *
  */
+var taskId2Task = {}
 
 function handleClick(type) {
     fetch("/tasks", {
@@ -49,6 +50,7 @@ function buildTask(bcname) {
     })
         .then((response) => response.json())
         .then((data) => {
+            taskId2Task[data.task_id] = `build ${bcname}`;
             getStatus(data.task_id);
         });
 }
@@ -137,6 +139,7 @@ function deployTask(bcname) {
     })
         .then((response) => response.json())
         .then((data) => {
+            taskId2Task[data.task_id] = `deploy ${bcname}`
             getStatus(data.task_id);
         });
 }
@@ -191,9 +194,10 @@ function getStatus(taskID) {
         .then((response) => response.json())
         .then((res) => {
             let d = new Date();
+            let taskName = taskId2Task[taskID];
             const html = `
       <tr>
-        <td>${taskID}</td>
+        <td>${taskName}</td>
         <td>${d.toLocaleString()}
         <td>${res.task_status}</td>
         <td>${res.task_result.current}</td>
