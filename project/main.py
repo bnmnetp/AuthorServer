@@ -34,7 +34,12 @@ from worker import (
     deploy_book,
 )
 from models import Session, auth_user, courses, Book, BookAuthor
-from authorImpact import get_enrollment_graph, get_pv_heatmap, get_subchap_heatmap
+from authorImpact import (
+    get_enrollment_graph,
+    get_pv_heatmap,
+    get_subchap_heatmap,
+    get_course_graph,
+)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -139,10 +144,16 @@ def impact(request: Request, book: str, user=Depends(auth_manager)):
         return RedirectResponse(url="/notauthorized")
 
     resGraph = get_enrollment_graph(book)
+    courseGraph = get_course_graph(book)
     chapterHM = get_pv_heatmap(book)
     return templates.TemplateResponse(
         "impact.html",
-        context={"request": request, "enrollData": resGraph, "chapterData": chapterHM},
+        context={
+            "request": request,
+            "enrollData": resGraph,
+            "chapterData": chapterHM,
+            "courseData": courseGraph,
+        },
     )
 
 

@@ -69,6 +69,52 @@ def get_enrollment_graph(BASECOURSE):
     return res.to_json()
 
 
+def get_course_graph(BASECOURSE):
+    dburl = os.environ.get("DEV_DBURL")
+    eng = create_engine(dburl)
+    # BASECOURSE = 'thinkcspy'
+    # TIMEFRAME = '2022-08-01'
+    TF = datetime.datetime(2022, 8, 1)
+    LY = TF - datetime.timedelta(days=365)
+
+    courses = pd.read_sql_query(
+        """select courselevel, count(*) as num_courses
+        from courses 
+        where term_start_date >= %(start)s and base_course = %(base)s 
+        group by courselevel """,
+        params=dict(start=TF, base=BASECOURSE),
+        con=eng,
+    )
+
+    ly_courses = pd.read_sql_query(
+        """select courselevel, count(*) as num_courses
+        from courses 
+        where term_start_date >= %(start)s and term_start_date < now() - interval '365 days' 
+        and base_course = %(base)s 
+        group by courselevel """,
+        params=dict(start=LY, base=BASECOURSE),
+        con=eng,
+    )
+
+    yheight = max(courses.num_courses.max(), ly_courses.num_courses.max())
+
+    scale = alt.Scale(domain=(0, yheight))
+
+    y = (
+        Chart(courses, title="Current Year")
+        .mark_bar()
+        .encode(x="courselevel", y=alt.Y("num_courses", scale=scale))
+    )
+    ly = (
+        Chart(ly_courses, title="Previous Year to date")
+        .mark_bar()
+        .encode(x="courselevel", y=alt.Y("num_courses", scale=scale))
+    )
+
+    res = ly | y
+    return res.to_json()
+
+
 # In[ ]:
 
 
