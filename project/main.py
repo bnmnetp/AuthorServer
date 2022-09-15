@@ -77,6 +77,7 @@ def fetch_books_by_author(author: str):
         select(Book, BookAuthor)
         .join(BookAuthor, BookAuthor.book == Book.document_id)
         .where(BookAuthor.author == author)
+        .order_by(BookAuthor.book)
     )
     with Session() as sess:
         res = sess.execute(query).fetchall()
