@@ -137,7 +137,9 @@ def update_last_build(book):
 def build_runestone_book(self, book):
     logger.debug(f"Building {book}")
     self.update_state(state="CHECKING", meta={"current": "pull latest"})
-    res = subprocess.run(["git", "pull"], capture_output=True, cwd=f"/books/{book}")
+    res = subprocess.run(
+        ["git", "pull", "--no-edit"], capture_output=True, cwd=f"/books/{book}"
+    )
     if res.returncode != 0:
         return False
 
@@ -170,7 +172,7 @@ def build_ptx_book(self, book):
     logger.debug(f"Building {book}")
     self.update_state(state="CHECKING", meta={"current": "pull latest"})
     res = subprocess.run(
-        f"git pull", shell=True, capture_output=True, cwd=f"/books/{book}"
+        f"git pull --no-edit", shell=True, capture_output=True, cwd=f"/books/{book}"
     )
     if res.returncode != 0:
         return False
