@@ -38,6 +38,7 @@ meta = MetaData()
 # in this application.
 auth_user = Table("auth_user", meta, autoload=True, autoload_with=engine)
 courses = Table("courses", meta, autoload=True, autoload_with=engine)
+library = Table("library", meta, autoload=True, autoload_with=engine)
 
 
 class Book(Base):
@@ -49,7 +50,7 @@ class Book(Base):
 
 class BookAuthor(Base):
     __tablename__ = "book_author"
-    # See https://stackoverflow.com/questions/28047027/sqlalchemy-not-find-table-for-creating-foreign-key 
+    # See https://stackoverflow.com/questions/28047027/sqlalchemy-not-find-table-for-creating-foreign-key
     # for why we do not use a string to specify the foreign key for author
     author = Column(
         String(512), ForeignKey(auth_user.c.username), primary_key=True, nullable=False

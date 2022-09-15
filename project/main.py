@@ -33,7 +33,7 @@ from worker import (
     build_ptx_book,
     deploy_book,
 )
-from models import Session, auth_user, courses, Book, BookAuthor
+from models import Session, auth_user, courses, Book, BookAuthor, library
 from authorImpact import (
     get_enrollment_graph,
     get_pv_heatmap,
@@ -135,6 +135,13 @@ def verify_author(user):
     return is_author
 
 
+def fetch_library_book(book):
+    query = library.select().where(library.c.basecourse == book)  # noqa: E712
+    with Session() as session:
+        res = session.execute(query)
+        return res.first()
+
+
 @app.get("/impact/{book}")
 def impact(request: Request, book: str, user=Depends(auth_manager)):
     # check for author status
@@ -144,9 +151,11 @@ def impact(request: Request, book: str, user=Depends(auth_manager)):
     else:
         return RedirectResponse(url="/notauthorized")
 
+    info = fetch_library_book(book)
     resGraph = get_enrollment_graph(book)
     courseGraph = get_course_graph(book)
     chapterHM = get_pv_heatmap(book)
+
     return templates.TemplateResponse(
         "impact.html",
         context={
@@ -154,6 +163,7 @@ def impact(request: Request, book: str, user=Depends(auth_manager)):
             "enrollData": resGraph,
             "chapterData": chapterHM,
             "courseData": courseGraph,
+            "title": info[1],
         },
     )
 
@@ -167,10 +177,11 @@ def subchapmap(request: Request, chapter: str, book: str, user=Depends(auth_mana
     else:
         return RedirectResponse(url="/notauthorized")
 
+    info = fetch_library_book(book)
     chapterHM = get_subchap_heatmap(chapter, book)
     return templates.TemplateResponse(
         "subchapmap.html",
-        context={"request": request, "subchapData": chapterHM},
+        context={"request": request, "subchapData": chapterHM, "title": info[1]},
     )
 
 
