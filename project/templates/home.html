@@ -17,7 +17,7 @@
       </tr>
       {% for book in book_list %}
       <tr>
-        <td>{{book.Book.document_id}}</td>
+        <td><a href="/editlibrary/{{book.Book.document_id}}">{{book.Book.document_id}}</a></td>
         <td>
           <button
             onclick="buildTask('{{book.Book.document_id}}')"

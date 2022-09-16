@@ -16,7 +16,7 @@ import datetime
 # third party
 # -----------
 import aiofiles
-from fastapi import Body, FastAPI, Form, Request, Depends
+from fastapi import Body, FastAPI, Form, Request, Depends, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,6 +27,7 @@ from fastapi_login import LoginManager
 
 # Local App
 # ---------
+from author_forms import LibraryForm
 from worker import (
     build_runestone_book,
     clone_runestone_book,
@@ -139,7 +140,22 @@ def fetch_library_book(book):
     query = library.select().where(library.c.basecourse == book)  # noqa: E712
     with Session() as session:
         res = session.execute(query)
-        return res.first()
+        # the result type of this query is a sqlalchemy CursorResult
+        # .all will return a list of Rows
+        ret = res.first()
+        # the result of .first() is a single sqlalchemy Row object which you can index into positionally
+        # or get by attribute or convert to a dictionay with ._asdict()
+        return ret
+
+
+def update_library_book(bookid, vals):
+    vals["for_classes"] = "T" if vals["for_classes"] else "F"
+    vals["is_visible"] = "T" if vals["is_visible"] else "F"
+
+    stmt = library.update().where(library.c.id == bookid).values(**vals)
+    with Session() as session:
+        session.execute(stmt)
+        session.commit()
 
 
 @app.get("/impact/{book}")
@@ -196,6 +212,26 @@ async def getlog(request: Request, book):
     else:
         result = "No logfile found"
     return JSONResponse({"detail": result})
+
+
+@app.get("/editlibrary/{book}")
+@app.post("/editlibrary/{book}")
+async def editlib(request: Request, book: str):
+    # Get the book and populate the form with current data
+    book_data = fetch_library_book(book)
+
+    # this will either create the form with data from the submitted form or
+    # from the kwargs passed if there is not form data.  So we can prepopulate
+    #
+    form = await LibraryForm.from_formdata(request, **book_data._asdict())
+    if request.method == "POST" and await form.validate():
+        print(f"Got {form.authors.data}")
+        print(f"FORM data = {form.data}")
+        update_library_book(book_data.id, form.data)
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "editlibrary.html", context=dict(request=request, form=form, book=book)
+    )
 
 
 @app.get("/notauthorized")
