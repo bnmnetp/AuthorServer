@@ -4,10 +4,12 @@ html {
   position: relative;
   min-height: 100%;
 }
+
 body {
   padding-top: 2rem;
   margin-bottom: 60px;
 }
+
 .footer {
   position: absolute;
   bottom: 0;
@@ -19,4 +21,9 @@ body {
 .taskbox {
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+
+.has-error {
+  color: red;
 }

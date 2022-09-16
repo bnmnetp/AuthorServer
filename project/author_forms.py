@@ -17,9 +17,9 @@ class LibraryForm(StarletteForm):
         description="Look at the library page to see the existing list of sections.  Please try to use one of those.  Note do not add the Textbooks: to the end.",
     )
     basecourse = StringField("Base Course or Document ID")
-    build_system = StringField("Build System")
+    build_system = StringField("Build System", [validators.AnyOf(["PTX", "Runestone"])])
     for_classes = BooleanField("Available for courses")
     is_visible = BooleanField("Visible to Everyone in Library")
     github_url = StringField("Github URL")
     main_page = StringField("Main page")
-    # last_build = DateTimeField("Last Build")
+    # last_build = DateTimeField("Last Build") - no reason to update this manually
