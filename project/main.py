@@ -332,10 +332,21 @@ async def do_deploy(payload=Body(...)):
 #
 @app.get("/tasks/{task_id}")
 async def get_status(task_id):
-    task_result = AsyncResult(task_id)
-    result = {
-        "task_id": task_id,
-        "task_status": task_result.status,
-        "task_result": task_result.result,
-    }
+    try:
+        task_result = AsyncResult(task_id)
+        result = {
+            "task_id": task_id,
+            "task_status": task_result.status,
+            "task_result": task_result.result,
+        }
+        print("TASK RESULT", task_result.__dict__)
+        if task_result.status == "FAILURE":
+            result["task_result"] = {"current": str(task_result.result)}
+    except:
+        result = {
+            "task_id": task_id,
+            "task_status": "FAILURE",
+            "task_result": {"current": "failed"},
+        }
+
     return JSONResponse(result)

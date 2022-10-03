@@ -155,7 +155,7 @@ def build_runestone_book(self, book):
                 "current": "git pull failed",
             },
         )
-        return False
+        raise Ignore()
 
     myclick = MyClick(self, "BUILDING")
     self.update_state(state="BUILDING", meta={"current": "running build"})
@@ -195,8 +195,15 @@ def build_ptx_book(self, book):
             olfile.write(res.stdout.decode("utf8"))
             olfile.write("\n====\n")
             olfile.write(res.stderr.decode("utf8"))
-        self.update_state(state="FAILED", meta={"current": "git pull failed"})
-        return False
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "exc_type": "RuntimeError",
+                "exc_message": "Pull failed",
+                "current": "git pull failed",
+            },
+        )
+        raise Ignore()
 
     os.chdir(f"/books/{book}")
     logger.debug(f"Before building myclick self = {self}")
