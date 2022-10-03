@@ -17,12 +17,13 @@ import time
 import subprocess
 import logging
 import pathlib
-from models import Session, auth_user, courses, Book, BookAuthor
+from models import Session, auth_user, courses, library, BookAuthor
 from sqlalchemy import update
 
 # Third Party
 # -----------
 from celery import Celery
+from celery.exceptions import Ignore
 
 # Local Application
 # -----------------
@@ -106,7 +107,7 @@ def clone_runestone_book(self, repo, bcname):
             self.update_state(state="FAILED", meta={"current": err[:20]})
             return False
     except:
-        self.update_state(state="FAILED", meta={"current": "failed"})
+        self.update_state(state="FAILURE", meta={"current": "failed"})
         return False
 
     # check the name of the repo move the top level file
@@ -125,8 +126,8 @@ def clone_runestone_book(self, repo, bcname):
 
 def update_last_build(book):
     stmt = (
-        update(Book)
-        .where((Book.document_id == book))
+        library.update()
+        .where(library.c.basecourse == book)
         .values(last_build=datetime.datetime.utcnow())
     )
     with Session.begin() as session:
@@ -141,6 +142,19 @@ def build_runestone_book(self, book):
         ["git", "pull", "--no-edit"], capture_output=True, cwd=f"/books/{book}"
     )
     if res.returncode != 0:
+        outputlog = pathlib.Path("/books", book, "cli.log")
+        with open(outputlog, "w") as olfile:
+            olfile.write(res.stdout.decode("utf8"))
+            olfile.write("\n====\n")
+            olfile.write(res.stderr.decode("utf8"))
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "exc_type": "RuntimeError",
+                "exc_message": "Pull failed",
+                "current": "git pull failed",
+            },
+        )
         return False
 
     myclick = MyClick(self, "BUILDING")
@@ -174,7 +188,14 @@ def build_ptx_book(self, book):
     res = subprocess.run(
         f"git pull --no-edit", shell=True, capture_output=True, cwd=f"/books/{book}"
     )
+    logger.debug(f"Checking results of pull for {book}")
     if res.returncode != 0:
+        outputlog = pathlib.Path("/books", book, "cli.log")
+        with open(outputlog, "w") as olfile:
+            olfile.write(res.stdout.decode("utf8"))
+            olfile.write("\n====\n")
+            olfile.write(res.stderr.decode("utf8"))
+        self.update_state(state="FAILED", meta={"current": "git pull failed"})
         return False
 
     os.chdir(f"/books/{book}")

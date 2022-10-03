@@ -41,13 +41,6 @@ courses = Table("courses", meta, autoload=True, autoload_with=engine)
 library = Table("library", meta, autoload=True, autoload_with=engine)
 
 
-class Book(Base):
-    __tablename__ = "book"
-    document_id = Column(String(50), unique=True, nullable=False, primary_key=True)
-    github_url = Column(String(250), unique=True, nullable=False)
-    last_build = Column(DateTime)
-
-
 class BookAuthor(Base):
     __tablename__ = "book_author"
     # See https://stackoverflow.com/questions/28047027/sqlalchemy-not-find-table-for-creating-foreign-key
@@ -56,7 +49,7 @@ class BookAuthor(Base):
         String(512), ForeignKey(auth_user.c.username), primary_key=True, nullable=False
     )
     book = Column(
-        String(50), ForeignKey("book.document_id"), primary_key=True, nullable=False
+        String(50), ForeignKey("library.basecourse"), primary_key=True, nullable=False
     )
 
 

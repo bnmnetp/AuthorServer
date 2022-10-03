@@ -17,10 +17,10 @@
       </tr>
       {% for book in book_list %}
       <tr>
-        <td><a href="/editlibrary/{{book.Book.document_id}}">{{book.Book.document_id}}</a></td>
+        <td><a href="/editlibrary/{{book.basecourse}}">{{book.basecourse}}</a></td>
         <td>
           <button
-            onclick="buildTask('{{book.Book.document_id}}')"
+            onclick="buildTask('{{book.basecourse}}')"
             type="button"
             class="btn btn-primary"
           >
@@ -29,7 +29,7 @@
         </td>
         <td>
           <button
-            onclick="deployTask('{{book.Book.document_id}}')"
+            onclick="deployTask('{{book.basecourse}}')"
             type="button"
             class="btn btn-success"
           >
@@ -38,7 +38,7 @@
         </td>
         <td>
           <button
-            onclick="showLog('{{book.Book.document_id}}')"
+            onclick="showLog('{{book.basecourse}}')"
             type="button"
             class="btn btn-success"
           >
@@ -47,10 +47,10 @@
         </td>
         <td>
           <a role="button" class="btn btn-info"
-            href="/impact/{{book.Book.document_id}}"
+            href="/impact/{{book.basecourse}}"
             >Student Impact</a>
         </td>
-        <td>{{book.Book.last_build}}</td>
+        <td>{{book.last_build}}</td>
       </tr>
       {% endfor %}
     </table>

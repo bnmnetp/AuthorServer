@@ -34,13 +34,14 @@ from worker import (
     build_ptx_book,
     deploy_book,
 )
-from models import Session, auth_user, courses, Book, BookAuthor, library
+from models import Session, auth_user, courses, BookAuthor, library
 from authorImpact import (
     get_enrollment_graph,
     get_pv_heatmap,
     get_subchap_heatmap,
     get_course_graph,
 )
+from runestone.server.utils import update_library
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -75,25 +76,25 @@ def fetch_user(user_id: str):
 
 def fetch_books_by_author(author: str):
     query = (
-        select(Book, BookAuthor)
-        .join(BookAuthor, BookAuthor.book == Book.document_id)
+        select(library, BookAuthor)
+        .join(BookAuthor, BookAuthor.book == library.c.basecourse)
         .where(BookAuthor.author == author)
         .order_by(BookAuthor.book)
     )
     with Session() as sess:
         res = sess.execute(query).fetchall()
+        for row in res:
+            print("ROW is ", row.title)
         return res
 
 
 def create_book_entry(author: str, document_id: str, github: str):
-    new_book = Book(
-        document_id=document_id,
-        github_url=github,
-        last_build=datetime.datetime.utcnow(),
+    update_library_book(
+        document_id,
+        {"authors": author, "basecourse": document_id, "github_url": github},
     )
     new_ba = BookAuthor(author=author, book=document_id)
     with Session.begin() as session:
-        session.add(new_book)
         session.add(new_ba)
 
 
