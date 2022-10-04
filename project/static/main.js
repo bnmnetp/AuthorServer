@@ -144,6 +144,37 @@ function deployTask(bcname) {
         });
 }
 
+function useinfoTask(classname) {
+   fetch("/dumpUseinfo", {
+       method: "POST",
+       headers: {
+           "Content-Type": "application/json",
+       },
+       body: JSON.stringify({ classname: classname }),
+   })
+       .then((response) => response.json())
+       .then((data) => {
+           taskId2Task[data.task_id] = `dump log ${classname}`;
+           getStatus(data.task_id);
+       });
+}
+
+function codeTask(classname) {
+   fetch("/dumpCode", {
+       method: "POST",
+       headers: {
+           "Content-Type": "application/json",
+       },
+       body: JSON.stringify({ classname: classname }),
+   })
+       .then((response) => response.json())
+       .then((data) => {
+           taskId2Task[data.task_id] = `dump log ${classname}`;
+           getStatus(data.task_id);
+       });
+    
+}
+
 async function getRepoStatus(bcname) {
     let response = await fetch("/isCloned", {
         method: "POST",
@@ -182,6 +213,28 @@ function showLog(book) {
 function hideLog() {
     document.getElementById("lastdiv").style.display = 'none';
 }
+
+
+function updateDlList(res) {
+    let dlList = document.getElementById("csv_files_available");
+    let onPage = [];
+    for (const y of dlList.children) { 
+        onPage.push(y.textContent);
+    }
+    for (f of res.ready_files) {
+        if (onPage.indexOf(f) == -1 ) {
+            let li = document.createElement('li');
+            let a = document.createElement('a');
+            // <li><a href="/getfile/{{lfile.name}}">{{lfile.name}}</a></li>
+            a.href = `/getfile/${f}`
+            a.innerHTML = f;
+            li.appendChild(a);
+            dlList.appendChild(li);
+        }
+    }
+}
+
+
 // This checks on the task status from a previously scheduled task.
 // todo: how to report the status better
 function getStatus(taskID) {
@@ -212,8 +265,20 @@ function getStatus(taskID) {
             }
 
             const taskStatus = res.task_status;
-            if (taskStatus === "SUCCESS" || taskStatus === "FAILURE")
+            if (taskStatus === "SUCCESS" || taskStatus === "FAILURE") {
+                if (res.task_result.current == "csv.zip file created") {
+                    // Get the list of files for download and add to the list.
+                    fetch(`/dlsAvailable`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((res) => updateDlList(res))
+                }
                 return false;
+            }
             setTimeout(function () {
                 getStatus(res.task_id);
             }, 1000);

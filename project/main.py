@@ -12,16 +12,19 @@
 import os
 import pathlib
 import datetime
+import logging
+import sys
 
 # third party
 # -----------
 import aiofiles
 from fastapi import Body, FastAPI, Form, Request, Depends, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from celery.result import AsyncResult
 from sqlalchemy import create_engine, Table, MetaData, select, and_, or_
+from sqlalchemy.sql import text
 from sqlalchemy.orm.session import sessionmaker
 from fastapi_login import LoginManager
 
@@ -33,6 +36,8 @@ from worker import (
     clone_runestone_book,
     build_ptx_book,
     deploy_book,
+    useinfo_to_csv,
+    code_to_csv,
 )
 from models import Session, auth_user, courses, BookAuthor, library
 from authorImpact import (
@@ -42,6 +47,14 @@ from authorImpact import (
     get_course_graph,
 )
 from runestone.server.utils import update_library
+
+logger = logging.getLogger("runestone")
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(levelname)s: %(asctime)s:  %(funcName)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -125,6 +138,36 @@ async def home(request: Request, user=Depends(auth_manager)):
     )
 
 
+@app.get("/logfiles")
+async def logfiles(request: Request, user=Depends(auth_manager)):
+    if verify_instructor(user):
+
+        lf_path = pathlib.Path("logfiles", user.username)
+        logger.debug(f"WORKING DIR = {lf_path}")
+        if lf_path.exists():
+            ready_files = [x for x in lf_path.iterdir()]
+        else:
+            ready_files = []
+        logger.debug(f"{ready_files=}")
+        return templates.TemplateResponse(
+            "logfiles.html",
+            context=dict(
+                request=request,
+                ready_files=ready_files,
+                course_name=user.course_name,
+                username=user.username,
+            ),
+        )
+    else:
+        return RedirectResponse(url="/notauthorized")
+
+
+@app.get("/getfile/{fname}")
+async def getfile(request: Request, fname: str, user=Depends(auth_manager)):
+    file_path = pathlib.Path("logfiles", user.username, fname)
+    return FileResponse(file_path)
+
+
 def verify_author(user):
     with Session() as sess:
         auth_row = sess.execute(
@@ -135,6 +178,18 @@ def verify_author(user):
             f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
         ).first()
     return is_author
+
+
+def verify_instructor(user):
+    query = text(
+        """select * from course_instructor where instructor = :iid and course = :cid"""
+    )
+    with Session() as sess:
+        is_instructor = sess.execute(
+            query, params=dict(iid=user.id, cid=user.course_id)
+        ).first()
+
+    return is_instructor
 
 
 def fetch_library_book(book):
@@ -326,6 +381,32 @@ async def do_deploy(payload=Body(...)):
     bcname = payload["bcname"]
     task = deploy_book.delay(bcname)
     return JSONResponse({"task_id": task.id})
+
+
+@app.post("/dumpUseinfo", status_code=201)
+async def dump_useinfo(payload=Body(...), user=Depends(auth_manager)):
+    classname = payload["classname"]
+    task = useinfo_to_csv.delay(classname, user.username)
+    return JSONResponse({"task_id": task.id})
+
+
+@app.post("/dumpCode", status_code=201)
+async def dump_useinfo(payload=Body(...), user=Depends(auth_manager)):
+    classname = payload["classname"]
+    task = code_to_csv.delay(classname, user.username)
+    return JSONResponse({"task_id": task.id})
+
+
+@app.get("/dlsAvailable", status_code=201)
+async def check_downloads(request: Request, user=Depends(auth_manager)):
+    lf_path = pathlib.Path("logfiles", user.username)
+    logger.debug(f"WORKING DIR = {lf_path}")
+    if lf_path.exists():
+        ready_files = [x.name for x in lf_path.iterdir()]
+    else:
+        ready_files = []
+
+    return JSONResponse({"ready_files": ready_files})
 
 
 # Called from javascript to get the current status of a task

@@ -18,12 +18,13 @@ import subprocess
 import logging
 import pathlib
 from models import Session, auth_user, courses, library, BookAuthor
-from sqlalchemy import update
+from sqlalchemy import update, create_engine
 
 # Third Party
 # -----------
 from celery import Celery
 from celery.exceptions import Ignore
+import pandas as pd
 
 # Local Application
 # -----------------
@@ -255,4 +256,44 @@ def deploy_book(self, book):
             logger.debug(res.stderr)
             return False
     self.update_state(state="SUCCESS", meta={"current": f"deploy complete"})
+    return True
+
+
+@celery.task(bind=True, name="useinfo_to_csv")
+def useinfo_to_csv(self, classname, username):
+    dburl = os.environ.get("DEV_DBURL")
+    eng = create_engine(dburl)
+    self.update_state(state="QUERYING", meta={"current": f"extracting from database"})
+    df = pd.read_sql_query(
+        """select * from useinfo where course_id = %(cname)s order by id""",
+        params=dict(cname=classname),
+        con=eng,
+    )
+    p = pathlib.Path("logfiles", username)
+    p.mkdir(parents=True, exist_ok=True)
+    p = p / f"{classname}_useinfo.csv.zip"
+    self.update_state(state="WRITING", meta={"current": f"creating csv.zip file"})
+    df.to_csv(p, index=False, compression={"method": "zip"})
+    self.update_state(state="SUCCESS", meta={"current": f"csv.zip file created"})
+    return True
+
+
+@celery.task(bind=True, name="code_to_csv")
+def code_to_csv(self, classname, username):
+    dburl = os.environ.get("DEV_DBURL")
+    eng = create_engine(dburl)
+    self.update_state(state="QUERYING", meta={"current": f"extracting from database"})
+    df = pd.read_sql_query(
+        """select acid, code, emessage, course_id, sid, timestamp, comment, language 
+        from code join courses on code.course_id = courses.id
+        where courses.course_name = %(cname)s order by code.id""",
+        params=dict(cname=classname),
+        con=eng,
+    )
+    p = pathlib.Path("logfiles", username)
+    p.mkdir(parents=True, exist_ok=True)
+    p = p / f"{classname}_code.csv.zip"
+    self.update_state(state="WRITING", meta={"current": f"creating csv.zip file"})
+    df.to_csv(p, index=False, compression={"method": "zip"})
+    self.update_state(state="SUCCESS", meta={"current": f"csv.zip file created"})
     return True
