@@ -30,7 +30,7 @@ from fastapi_login import LoginManager
 
 # Local App
 # ---------
-from author_forms import LibraryForm
+from author_forms import LibraryForm, DatashopForm
 from worker import (
     build_runestone_book,
     clone_runestone_book,
@@ -38,6 +38,7 @@ from worker import (
     deploy_book,
     useinfo_to_csv,
     code_to_csv,
+    anonymize_data_dump,
 )
 from models import Session, auth_user, courses, BookAuthor, library
 from authorImpact import (
@@ -290,6 +291,35 @@ async def editlib(request: Request, book: str):
     )
 
 
+@app.get("/anonymize_data/{book}")
+@app.post("/anonymize_data/{book}")
+async def anondata(request: Request, book: str, user=Depends(auth_manager)):
+    # Get the book and populate the form with current data
+    if not verify_author(user):
+        return RedirectResponse(url="/notauthorized")
+
+    lf_path = pathlib.Path("datashop", user.username)
+    logger.debug(f"WORKING DIR = {lf_path}")
+    if lf_path.exists():
+        ready_files = [x for x in lf_path.iterdir()]
+    else:
+        ready_files = []
+
+    # this will either create the form with data from the submitted form or
+    # from the kwargs passed if there is not form data.  So we can prepopulate
+    #
+    form = await DatashopForm.from_formdata(request, basecourse=book)
+    if request.method == "POST" and await form.validate():
+        print(f"Got {form.authors.data}")
+        print(f"FORM data = {form.data}")
+
+        # return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "anonymize_data.html",
+        context=dict(request=request, form=form, book=book, ready_files=ready_files),
+    )
+
+
 @app.get("/notauthorized")
 def not_authorized(request: Request):
     return templates.TemplateResponse(
@@ -397,8 +427,8 @@ async def dump_useinfo(payload=Body(...), user=Depends(auth_manager)):
     return JSONResponse({"task_id": task.id})
 
 
-@app.get("/dlsAvailable", status_code=201)
-async def check_downloads(request: Request, user=Depends(auth_manager)):
+@app.get("/dlsAvailable/{kind}", status_code=201)
+async def check_downloads(request: Request, kind: str, user=Depends(auth_manager)):
     lf_path = pathlib.Path("logfiles", user.username)
     logger.debug(f"WORKING DIR = {lf_path}")
     if lf_path.exists():
@@ -407,6 +437,13 @@ async def check_downloads(request: Request, user=Depends(auth_manager)):
         ready_files = []
 
     return JSONResponse({"ready_files": ready_files})
+
+
+@app.post("/start_extract", status_code=201)
+async def do_anonymize(payload=Body(...), user=Depends(auth_manager)):
+    payload["user"] = user.username
+    task = anonymize_data_dump.delay(**payload)
+    return JSONResponse({"task_id": task.id})
 
 
 # Called from javascript to get the current status of a task

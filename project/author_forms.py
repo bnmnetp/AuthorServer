@@ -1,5 +1,13 @@
 from starlette_wtf import StarletteForm
-from wtforms import Form, BooleanField, StringField, validators, DateTimeField
+from wtforms import (
+    Form,
+    BooleanField,
+    StringField,
+    validators,
+    DateTimeField,
+    DateField,
+    IntegerRangeField,
+)
 
 
 # Make a form for the library table
@@ -23,3 +31,16 @@ class LibraryForm(StarletteForm):
     github_url = StringField("Github URL")
     main_page = StringField("Main page")
     # last_build = DateTimeField("Last Build") - no reason to update this manually
+
+
+# Documentation on the Datashop format is here
+# https://pslcdatashop.web.cmu.edu/help?page=importFormatTd
+
+
+class DatashopForm(StarletteForm):
+    basecourse = StringField("Base Course")
+    with_assess = BooleanField("Only Courses with pre/post test")
+    start_date = DateField("Select Courses with Start Dates After")
+    end_date = DateField("Do not include data after")
+    sample_size = IntegerRangeField("Number of courses to include")
+    include_basecourse = BooleanField("Include data from the open course")

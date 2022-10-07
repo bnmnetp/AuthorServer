@@ -172,7 +172,39 @@ function codeTask(classname) {
            taskId2Task[data.task_id] = `dump log ${classname}`;
            getStatus(data.task_id);
        });
-    
+
+}
+
+// Gets data from the form in anonymize_data.html
+// This endpoint requires a valid login + author and/or researcher privileges
+function startExtract() {
+   // Get / Validate Form fields
+   let data = {};
+   data.basecourse = document.getElementById("basecourse").value;
+   data.with_assess = document.getElementById("with_assess").checked;
+   data.start_date = document.getElementById("start_date").value;
+   data.end_date = document.getElementById("end_date").value;
+   data.sample_size = document.getElementById("sample_size").value;
+   data.include_basecourse = document.getElementById("include_basecourse").checked;
+
+   if (!data.start_date || !data.end_date ) {
+      alert("You must set a start/end date")
+      return;
+   }
+
+   fetch("/start_extract", {
+       method: "POST",
+       headers: {
+           "Content-Type": "application/json",
+       },
+       body: JSON.stringify(data),
+   })
+       .then((response) => response.json())
+       .then((data) => {
+           taskId2Task[data.task_id] = `Create Datashop for ${data.basecourse}`;
+           getStatus(data.task_id);
+       });
+
 }
 
 async function getRepoStatus(bcname) {
@@ -207,7 +239,7 @@ function showLog(book) {
         div.style.display = "block";
         log.innerHTML = res.detail;
     })
-    .catch((err) => console.log(err));    
+    .catch((err) => console.log(err));
 }
 
 function hideLog() {
@@ -218,7 +250,7 @@ function hideLog() {
 function updateDlList(res) {
     let dlList = document.getElementById("csv_files_available");
     let onPage = [];
-    for (const y of dlList.children) { 
+    for (const y of dlList.children) {
         onPage.push(y.textContent);
     }
     for (f of res.ready_files) {
@@ -268,7 +300,7 @@ function getStatus(taskID) {
             if (taskStatus === "SUCCESS" || taskStatus === "FAILURE") {
                 if (res.task_result.current == "csv.zip file created") {
                     // Get the list of files for download and add to the list.
-                    fetch(`/dlsAvailable`, {
+                    fetch(`/dlsAvailable/logfiles`, {
                         method: "GET",
                         headers: {
                             "Content-Type": "application/json",

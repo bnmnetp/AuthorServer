@@ -29,7 +29,7 @@ import pandas as pd
 # Local Application
 # -----------------
 from runestone.server.utils import _build_runestone_book, _build_ptx_book
-
+from anonymizeCourseData import Anonymizer
 
 # Set up logging
 
@@ -284,7 +284,7 @@ def code_to_csv(self, classname, username):
     eng = create_engine(dburl)
     self.update_state(state="QUERYING", meta={"current": f"extracting from database"})
     df = pd.read_sql_query(
-        """select acid, code, emessage, course_id, sid, timestamp, comment, language 
+        """select acid, code, emessage, course_id, sid, timestamp, comment, language
         from code join courses on code.course_id = courses.id
         where courses.course_name = %(cname)s order by code.id""",
         params=dict(cname=classname),
@@ -296,4 +296,36 @@ def code_to_csv(self, classname, username):
     self.update_state(state="WRITING", meta={"current": f"creating csv.zip file"})
     df.to_csv(p, index=False, compression={"method": "zip"})
     self.update_state(state="SUCCESS", meta={"current": f"csv.zip file created"})
+    return True
+
+
+@celery.task(bind=True, name="anonymize_data_dump")
+def anonymize_data_dump(self, **kwargs):
+    basecourse = kwargs["basecourse"]
+    del kwargs["basecourse"]
+    username = kwargs["user"]
+    del kwargs["user"]
+    a = Anonymizer(basecourse, config.dburl, **kwargs)
+    print("Choosing Courses")
+    self.update_state(state="WORKING", meta={"current": f"Choosing courses"})
+    a.choose_courses()
+    print("Getting Users")
+    self.update_state(state="WORKING", meta={"current": f"Anonymizing users"})
+    a.get_users()
+    print("Getting user activities")
+    self.update_state(state="WORKING", meta={"current": f"Processing user activities"})
+    a.get_user_activities()
+    print("sessionizing")
+    self.update_state(state="WORKING", meta={"current": f"Sessionizing the data"})
+    a.sessionize_data()
+    print("combining to datashop")
+    self.update_state(
+        state="WORKING", meta={"current": f"combining all data (be patient)"}
+    )
+    a.create_datashop_data()
+    self.update_state(state="WORKING", meta={"current": f"Writing datashop file"})
+    p = pathlib.Path("datashop", username)
+    p.mkdir(parents=True, exist_ok=True)
+    a.write_datashop(path=p)
+    self.update_state(state="SUCCESS", meta={"current": f"Ready for download"})
     return True
