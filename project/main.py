@@ -2,6 +2,10 @@
 # |docname| - web ui endponits for authors
 # ****************************************
 #
+# / - See home
+# /logfiles
+# /impact
+# /anonymize_data
 #
 # Imports
 # =======
@@ -429,6 +433,7 @@ async def dump_useinfo(payload=Body(...), user=Depends(auth_manager)):
 
 @app.get("/dlsAvailable/{kind}", status_code=201)
 async def check_downloads(request: Request, kind: str, user=Depends(auth_manager)):
+    // kind will be either logfiles or datashop
     lf_path = pathlib.Path("logfiles", user.username)
     logger.debug(f"WORKING DIR = {lf_path}")
     if lf_path.exists():

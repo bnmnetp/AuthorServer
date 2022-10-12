@@ -298,9 +298,14 @@ function getStatus(taskID) {
 
             const taskStatus = res.task_status;
             if (taskStatus === "SUCCESS" || taskStatus === "FAILURE") {
-                if (res.task_result.current == "csv.zip file created") {
+                if (res.task_result.current == "csv.zip file created" ||
+                    res.task_result.current == "Ready for download") {
+                    let kind = "datashop";
+                    if (res.task_result.current == "csv.zip file created") {
+                       kind = "logfiles";
+                    }
                     // Get the list of files for download and add to the list.
-                    fetch(`/dlsAvailable/logfiles`, {
+                    fetch(`/dlsAvailable/${kind}`, {
                         method: "GET",
                         headers: {
                             "Content-Type": "application/json",
