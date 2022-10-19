@@ -275,6 +275,23 @@ class Anonymizer:
         else:
             return "unclassified"
 
+    # this should be called like useinfo['act'] = useinfo.apply(self.anonymize_sendmessage, axis=1)
+    def anonymize_sendmessage(self, row):
+        if row.event == "sendmessage":
+            act_parts = row.act.split(":")
+            act_parts[1] = str(self.user_map[act_parts[1]])
+            return ":".join(act_parts)
+        else:
+            return row.act
+
+    def anonymize_ratepeer(self, row):
+        if row.event == "ratepeer":
+            act_parts = row.act.split(":")
+            act_parts[0] = str(self.user_map[act_parts[0]])
+            return ":".join(act_parts)
+        else:
+            return row.act
+
     def get_user_activities(self):
         useinfo = pd.read_sql_query(
             f"""
@@ -351,6 +368,10 @@ class Anonymizer:
         useinfo["base_course"] = useinfo.course_id.map(
             lambda x: self.anon_to_base.get(x)
         )
+        # anonymize act field for sendmessage event
+        useinfo["act"] = useinfo.apply(self.anonymize_sendmessage, axis=1)
+        useinfo["act"] = useinfo.apply(self.anonymize_ratepeer, axis=1)
+        # anonymize ratepeer fields
         useinfo["div_id"] = useinfo.div_id.map(anon_page)
 
         code_withnames["sid"] = code_withnames.sid.map(
@@ -623,9 +644,10 @@ class Anonymizer:
 
 if __name__ == "__main__":
     a = Anonymizer(
-        "fopp",
-        os.environ("DBURL"),
+        "py4e-int",
+        os.environ["DBURL"],
         sample_size=3,
+        cl=["Win22-SI206", "Win21-SI206"],
     )
     print("Choosing Courses")
     a.choose_courses()
