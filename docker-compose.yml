@@ -3,12 +3,12 @@ version: '3.8'
 services:
 
   web:
-    build: ./project
+    build: ./authorserver
     ports:
       - 8004:8000
     command: ./start-web.sh
     volumes:
-      - ./project:/usr/src/app
+      - ./authorserver:/usr/src/app
       - /Users/bmiller/Runestone/books:/books
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -18,10 +18,10 @@ services:
       - redis
 
   worker:
-    build: ./project
+    build: ./authorserver
     command: ./start-worker.sh
     volumes:
-      - ./project:/usr/src/app
+      - ./authorserver:/usr/src/app
       - /Users/bmiller/Runestone/books:/books
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
