@@ -107,12 +107,28 @@ def fetch_books_by_author(author: str):
 
 
 def create_book_entry(author: str, document_id: str, github: str):
-    update_library_book(
-        document_id,
-        {"authors": author, "basecourse": document_id, "github_url": github},
+    # need to create a library entry first.
+    course_stmt = courses.insert().values(
+        base_course=document_id,
+        course_name=document_id,
+        python3="T",
+        term_start_date="2022-01-01",
+        login_required="F",
+        institution="Runestone",
+        courselevel="",
+        downloads_enabled="F",
+        allow_pairs="F",
+        new_server="T",
     )
+    vals = {"authors": author, "basecourse": document_id, "github_url": github}
+    vals["title"] = document_id
+    stmt = library.insert().values(**vals)
+
     new_ba = BookAuthor(author=author, book=document_id)
+    # Now execute all of the statments in a single transaction.
     with Session.begin() as session:
+        session.execute(course_stmt)
+        session.execute(stmt)
         session.add(new_ba)
 
 
@@ -182,6 +198,9 @@ def verify_author(user):
         is_author = sess.execute(
             f"""select * from auth_membership where user_id = {user.id} and group_id = {auth_group_id}"""
         ).first()
+        logger.debug("debugging is author")
+        logger.debug(user)
+        logger.debug(is_author)
     return is_author
 
 
@@ -214,6 +233,15 @@ def update_library_book(bookid, vals):
     vals["is_visible"] = "T" if vals["is_visible"] else "F"
 
     stmt = library.update().where(library.c.id == bookid).values(**vals)
+    with Session() as session:
+        session.execute(stmt)
+        session.commit()
+
+
+# TODO finish this use bookid as title temporarily
+def create_library_book(bookid, vals):
+    vals["title"] = bookid
+    stmt = library.insert().values(**vals)
     with Session() as session:
         session.execute(stmt)
         session.commit()
@@ -352,23 +380,7 @@ async def new_course(payload=Body(...), user=Depends(auth_manager)):
     if "DEV_DBURL" not in os.environ:
         return JSONResponse({"detail": "DBURL is not set"})
     else:
-        engine = create_engine(os.environ["DEV_DBURL"])
-        res = engine.execute(
-            f"""insert into courses
-           (course_name, base_course, python3, term_start_date, login_required, institution, courselevel, downloads_enabled, allow_pairs, new_server)
-                values ('{base_course}',
-                '{base_course}',
-                'T',
-                '2022-01-01',
-                'F',
-                'Runestone',
-                '',
-                'F',
-                'F',
-                'T')
-                """
-        )
-        create_book_entry(user.username, base_course, github_url)
+        res = create_book_entry(user.username, base_course, github_url)
         if res:
             return JSONResponse({"detail": "success"})
         else:

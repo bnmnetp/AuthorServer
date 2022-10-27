@@ -107,8 +107,16 @@ def clone_runestone_book(self, repo, bcname):
             logger.debug(f"ERROR: {err}")
             self.update_state(state="FAILED", meta={"current": err[:20]})
             return False
-    except:
-        self.update_state(state="FAILURE", meta={"current": "failed"})
+    except Exception as exc:
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "exc_type": "RuntimeError",
+                "exc_message": str(exc),
+                "current": "git clone failed",
+            },
+        )
+
         return False
 
     # check the name of the repo move the top level file

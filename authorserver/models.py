@@ -49,7 +49,7 @@ class BookAuthor(Base):
         String(512), ForeignKey(auth_user.c.username), primary_key=True, nullable=False
     )
     book = Column(
-        String(50), ForeignKey("library.basecourse"), primary_key=True, nullable=False
+        String(50), ForeignKey(library.c.basecourse), primary_key=True, nullable=False
     )
 
 
