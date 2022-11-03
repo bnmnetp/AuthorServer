@@ -169,7 +169,7 @@ def build_runestone_book(self, book):
     myclick = MyClick(self, "BUILDING")
     self.update_state(state="BUILDING", meta={"current": "running build"})
     os.chdir(f"/books/{book}")
-    res = _build_runestone_book(book, click=myclick)
+    res = _build_runestone_book(config, book, click=myclick)
     if res:
         self.update_state(state="FINISHING", meta={"current": "changing permissions"})
     else:
