@@ -311,6 +311,7 @@ def code_to_csv(self, classname, username):
 
 @celery.task(bind=True, name="anonymize_data_dump")
 def anonymize_data_dump(self, **kwargs):
+    os.chdir("/usr/src/app")
     basecourse = kwargs["basecourse"]
     del kwargs["basecourse"]
     username = kwargs["user"]
