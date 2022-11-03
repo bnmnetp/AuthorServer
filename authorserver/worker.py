@@ -269,6 +269,7 @@ def deploy_book(self, book):
 
 @celery.task(bind=True, name="useinfo_to_csv")
 def useinfo_to_csv(self, classname, username):
+    os.chdir("/usr/src/app")
     dburl = os.environ.get("DEV_DBURL")
     eng = create_engine(dburl)
     self.update_state(state="QUERYING", meta={"current": f"extracting from database"})
@@ -288,6 +289,7 @@ def useinfo_to_csv(self, classname, username):
 
 @celery.task(bind=True, name="code_to_csv")
 def code_to_csv(self, classname, username):
+    os.chdir("/usr/src/app")
     dburl = os.environ.get("DEV_DBURL")
     eng = create_engine(dburl)
     self.update_state(state="QUERYING", meta={"current": f"extracting from database"})
