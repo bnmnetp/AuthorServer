@@ -18,6 +18,7 @@ import pathlib
 import datetime
 import logging
 import sys
+import time
 
 # third party
 # -----------
@@ -166,7 +167,14 @@ async def logfiles(request: Request, user=Depends(auth_manager)):
         lf_path = pathlib.Path("logfiles", user.username)
         logger.debug(f"WORKING DIR = {lf_path}")
         if lf_path.exists():
-            ready_files = [x for x in lf_path.iterdir()]
+            ready_files = {
+                x: str(
+                    time.strftime(
+                        "%Y-%m-%d %H:%M;%S", time.localtime(x.stat().st_mtime)
+                    )
+                )
+                for x in lf_path.iterdir()
+            }
         else:
             ready_files = []
         logger.debug(f"{ready_files=}")
@@ -290,6 +298,7 @@ def subchapmap(request: Request, chapter: str, book: str, user=Depends(auth_mana
     )
 
 
+# Called to download the log
 @app.get("/getlog/{book}")
 async def getlog(request: Request, book):
     logpath = pathlib.Path("/books", book, "cli.log")

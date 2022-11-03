@@ -8,12 +8,12 @@ var taskId2Task = {}
 
 function handleClick(type) {
     fetch("/tasks", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ type: type }),
-    })
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ type: type }),
+        })
         .then((response) => response.json())
         .then((data) => {
             getStatus(data.task_id);
@@ -27,12 +27,12 @@ function cloneTask() {
     let repo = document.querySelector("#gitrepo");
     let bcname = document.querySelector("#bcname");
     fetch("/clone", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url: repo.value, bcname: bcname.value }),
-    })
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: repo.value, bcname: bcname.value }),
+        })
         .then((response) => response.json())
         .then((data) => {
             getStatus(data.task_id);
@@ -42,12 +42,12 @@ function cloneTask() {
 // Schedule a task to build a book then follow its status
 function buildTask(bcname) {
     fetch("/buildBook", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ bcname: bcname }),
-    })
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ bcname: bcname }),
+        })
         .then((response) => response.json())
         .then((data) => {
             taskId2Task[data.task_id] = `build ${bcname}`;
@@ -103,13 +103,12 @@ async function addCourse() {
     });
     if (response.ok) {
         let data = await response.json();
-        if (data.detail == "success") {
-        }
+        if (data.detail == "success") {}
         cloneTask();
         // if clone fails we should remove from db? - maybe add a remove button?
         // check for repo to be present.
         let i = 0;
-        let iid = setInterval(async function () {
+        let iid = setInterval(async function() {
             let res = await getRepoStatus(bcname.value);
             if (res) {
                 // add row for the new book.
@@ -131,12 +130,12 @@ async function addCourse() {
 
 function deployTask(bcname) {
     fetch("/deployBook", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ bcname: bcname }),
-    })
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ bcname: bcname }),
+        })
         .then((response) => response.json())
         .then((data) => {
             taskId2Task[data.task_id] = `deploy ${bcname}`
@@ -145,65 +144,65 @@ function deployTask(bcname) {
 }
 
 function useinfoTask(classname) {
-   fetch("/dumpUseinfo", {
-       method: "POST",
-       headers: {
-           "Content-Type": "application/json",
-       },
-       body: JSON.stringify({ classname: classname }),
-   })
-       .then((response) => response.json())
-       .then((data) => {
-           taskId2Task[data.task_id] = `dump log ${classname}`;
-           getStatus(data.task_id);
-       });
+    fetch("/dumpUseinfo", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ classname: classname }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            taskId2Task[data.task_id] = `dump log ${classname}`;
+            getStatus(data.task_id);
+        });
 }
 
 function codeTask(classname) {
-   fetch("/dumpCode", {
-       method: "POST",
-       headers: {
-           "Content-Type": "application/json",
-       },
-       body: JSON.stringify({ classname: classname }),
-   })
-       .then((response) => response.json())
-       .then((data) => {
-           taskId2Task[data.task_id] = `dump log ${classname}`;
-           getStatus(data.task_id);
-       });
+    fetch("/dumpCode", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ classname: classname }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            taskId2Task[data.task_id] = `dump log ${classname}`;
+            getStatus(data.task_id);
+        });
 
 }
 
 // Gets data from the form in anonymize_data.html
 // This endpoint requires a valid login + author and/or researcher privileges
 function startExtract() {
-   // Get / Validate Form fields
-   let data = {};
-   data.basecourse = document.getElementById("basecourse").value;
-   data.with_assess = document.getElementById("with_assess").checked;
-   data.start_date = document.getElementById("start_date").value;
-   data.end_date = document.getElementById("end_date").value;
-   data.sample_size = document.getElementById("sample_size").value;
-   data.include_basecourse = document.getElementById("include_basecourse").checked;
+    // Get / Validate Form fields
+    let data = {};
+    data.basecourse = document.getElementById("basecourse").value;
+    data.with_assess = document.getElementById("with_assess").checked;
+    data.start_date = document.getElementById("start_date").value;
+    data.end_date = document.getElementById("end_date").value;
+    data.sample_size = document.getElementById("sample_size").value;
+    data.include_basecourse = document.getElementById("include_basecourse").checked;
 
-   if (!data.start_date || !data.end_date ) {
-      alert("You must set a start/end date")
-      return;
-   }
+    if (!data.start_date || !data.end_date) {
+        alert("You must set a start/end date")
+        return;
+    }
 
-   fetch("/start_extract", {
-       method: "POST",
-       headers: {
-           "Content-Type": "application/json",
-       },
-       body: JSON.stringify(data),
-   })
-       .then((response) => response.json())
-       .then((data) => {
-           taskId2Task[data.task_id] = `Create Datashop for ${data.basecourse}`;
-           getStatus(data.task_id);
-       });
+    fetch("/start_extract", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            taskId2Task[data.task_id] = `Create Datashop for ${data.basecourse}`;
+            getStatus(data.task_id);
+        });
 
 }
 
@@ -226,20 +225,20 @@ async function getRepoStatus(bcname) {
 
 function showLog(book) {
     fetch(`/getlog/${book}`, {
-    method: "GET",
-    headers: {
-        "Content-Type": "application/json",
-    },
-})
-    .then((response) => response.json())
-    .then((res) => {
-        let d = new Date();
-        let log = document.getElementById("lastlog");
-        let div = document.getElementById("lastdiv");
-        div.style.display = "block";
-        log.innerHTML = res.detail;
-    })
-    .catch((err) => console.log(err));
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        .then((response) => response.json())
+        .then((res) => {
+            let d = new Date();
+            let log = document.getElementById("lastlog");
+            let div = document.getElementById("lastdiv");
+            div.style.display = "block";
+            log.innerHTML = res.detail;
+        })
+        .catch((err) => console.log(err));
 }
 
 function hideLog() {
@@ -251,10 +250,11 @@ function updateDlList(res) {
     let dlList = document.getElementById("csv_files_available");
     let onPage = [];
     for (const y of dlList.children) {
-        onPage.push(y.textContent);
+        var fname = y.querySelector(".logfilename").textContent;
+        onPage.push(fname);
     }
     for (f of res.ready_files) {
-        if (onPage.indexOf(f) == -1 ) {
+        if (onPage.indexOf(f) == -1) {
             let li = document.createElement('li');
             let a = document.createElement('a');
             // <li><a href="/getfile/{{lfile.name}}">{{lfile.name}}</a></li>
@@ -262,6 +262,12 @@ function updateDlList(res) {
             a.innerHTML = f;
             li.appendChild(a);
             dlList.appendChild(li);
+        } else {
+            if (f.indexOf(courseName) >= 0) {
+                let mt = document.getElementById(`${f}_mtime`)
+                let now = new Date();
+                mt.innerHTML = "Today " + now.toLocaleTimeString();
+            }
         }
     }
 }
@@ -271,11 +277,11 @@ function updateDlList(res) {
 // todo: how to report the status better
 function getStatus(taskID) {
     fetch(`/tasks/${taskID}`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
-    })
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
         .then((response) => response.json())
         .then((res) => {
             let d = new Date();
@@ -302,21 +308,21 @@ function getStatus(taskID) {
                     res.task_result.current == "Ready for download") {
                     let kind = "datashop";
                     if (res.task_result.current == "csv.zip file created") {
-                       kind = "logfiles";
+                        kind = "logfiles";
                     }
                     // Get the list of files for download and add to the list.
                     fetch(`/dlsAvailable/${kind}`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    })
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        })
                         .then((response) => response.json())
                         .then((res) => updateDlList(res))
                 }
                 return false;
             }
-            setTimeout(function () {
+            setTimeout(function() {
                 getStatus(res.task_id);
             }, 1000);
         })
