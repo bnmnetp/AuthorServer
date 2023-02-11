@@ -185,6 +185,7 @@ function startExtract() {
     data.end_date = document.getElementById("end_date").value;
     data.sample_size = document.getElementById("sample_size").value;
     data.include_basecourse = document.getElementById("include_basecourse").checked;
+    data.specific_course = document.getElementById("specific_course").value;
 
     if (!data.start_date || !data.end_date) {
         alert("You must set a start/end date")
@@ -246,7 +247,7 @@ function hideLog() {
 }
 
 
-function updateDlList(res) {
+function updateDlList(res, kind) {
     let dlList = document.getElementById("csv_files_available");
     let onPage = [];
     for (const y of dlList.children) {
@@ -258,7 +259,11 @@ function updateDlList(res) {
             let li = document.createElement('li');
             let a = document.createElement('a');
             // <li><a href="/getfile/{{lfile.name}}">{{lfile.name}}</a></li>
-            a.href = `/getfile/${f}`
+            if (kind === "datashop") {
+                a.href = `/getdatashop/${f}`
+            } else {
+                a.href = `/getfile/${f}`
+            }
             a.innerHTML = f;
             li.appendChild(a);
             dlList.appendChild(li);
@@ -309,7 +314,6 @@ function getStatus(taskID) {
                     let kind = "datashop";
                     if (res.task_result.current == "csv.zip file created") {
                         kind = "logfiles";
-                    }
                     // Get the list of files for download and add to the list.
                     fetch(`/dlsAvailable/${kind}`, {
                             method: "GET",
@@ -318,7 +322,7 @@ function getStatus(taskID) {
                             },
                         })
                         .then((response) => response.json())
-                        .then((res) => updateDlList(res))
+                        .then((res) => updateDlList(res, kind))
                 }
                 return false;
             }

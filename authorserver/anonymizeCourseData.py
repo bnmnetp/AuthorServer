@@ -101,7 +101,7 @@ class Anonymizer:
         end_date="2022-05-16",
         sample_size=10,
         include_basecourse=False,
-        cl=[],
+        specific_course="",
     ):
         self.eng = create_engine(dburl)
         self.BASECOURSE = basecourse
@@ -111,7 +111,10 @@ class Anonymizer:
         self.SAMPLE_SIZE = int(sample_size)
         print(f"include basecourse = {include_basecourse}")
         self.include_basecourse = include_basecourse
-        self.COURSE_LIST = cl
+        if specific_course:
+            self.COURSE_LIST = [specific_course] * 2
+        else:
+            self.COURSE_LIST = []
 
     def choose_courses(self):
         if self.WITH_ASSESS:
@@ -279,7 +282,8 @@ class Anonymizer:
     def anonymize_sendmessage(self, row):
         if row.event == "sendmessage":
             act_parts = row.act.split(":")
-            act_parts[1] = str(self.user_map[act_parts[1]])
+            if act_parts[1] != "system":
+                act_parts[1] = str(self.user_map[act_parts[1]])
             return ":".join(act_parts)
         else:
             return row.act

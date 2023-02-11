@@ -44,3 +44,4 @@ class DatashopForm(StarletteForm):
     end_date = DateField("Do not include data after")
     sample_size = IntegerRangeField("Number of courses to include")
     include_basecourse = BooleanField("Include data from the open course")
+    specific_course = StringField("Dump Data for one course")

@@ -28,6 +28,7 @@ from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from celery.result import AsyncResult
+import pandas as pd
 from sqlalchemy import create_engine, Table, MetaData, select, and_, or_
 from sqlalchemy.sql import text
 from sqlalchemy.orm.session import sessionmaker
@@ -197,6 +198,12 @@ async def getfile(request: Request, fname: str, user=Depends(auth_manager)):
     return FileResponse(file_path)
 
 
+@app.get("/getdatashop/{fname}")
+async def getfile(request: Request, fname: str, user=Depends(auth_manager)):
+    file_path = pathlib.Path("datashop", user.username, fname)
+    return FileResponse(file_path)
+
+
 def verify_author(user):
     with Session() as sess:
         auth_row = sess.execute(
@@ -253,6 +260,34 @@ def create_library_book(bookid, vals):
     with Session() as session:
         session.execute(stmt)
         session.commit()
+
+
+@app.get("/dump/assignments/{course}")
+def dump_assignments(request: Request, course: str, user=Depends(auth_manager)):
+
+    if not (verify_instructor(user) and user.course_name == course):
+        return RedirectResponse(url="/notauthorized")
+
+    eng = create_engine(os.environ["DEV_DBURL"])
+
+    all_aq_pairs = pd.read_sql_query(
+        f"""
+    SELECT assignments.name aname,
+           questions.name question,
+           assignments.visible,
+           assignments.is_peer,
+           assignments.is_timed
+    FROM assignments
+    JOIN assignment_questions ON assignment_questions.assignment_id = assignments.id
+    JOIN questions ON questions.id = assignment_questions.question_id
+    JOIN courses ON assignments.course = courses.id
+    WHERE courses.course_name = '{course}'
+    """,
+        eng,
+    )
+    all_aq_pairs.to_csv(f"{course}_assignments.csv", index=False)
+
+    return JSONResponse({"detail": "success"})
 
 
 @app.get("/impact/{book}")
@@ -357,7 +392,13 @@ async def anondata(request: Request, book: str, user=Depends(auth_manager)):
         # return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(
         "anonymize_data.html",
-        context=dict(request=request, form=form, book=book, ready_files=ready_files),
+        context=dict(
+            request=request,
+            form=form,
+            book=book,
+            ready_files=ready_files,
+            kind="datashop",
+        ),
     )
 
 
