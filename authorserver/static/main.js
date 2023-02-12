@@ -314,6 +314,7 @@ function getStatus(taskID) {
                     let kind = "datashop";
                     if (res.task_result.current == "csv.zip file created") {
                         kind = "logfiles";
+                    }
                     // Get the list of files for download and add to the list.
                     fetch(`/dlsAvailable/${kind}`, {
                             method: "GET",
