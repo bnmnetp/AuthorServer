@@ -282,8 +282,7 @@ class Anonymizer:
     def anonymize_sendmessage(self, row):
         if row.event == "sendmessage":
             act_parts = row.act.split(":")
-            if act_parts[1] != "system":
-                act_parts[1] = str(self.user_map[act_parts[1]])
+            act_parts[1] = str(self.user_map.get(act_parts[1], "Anonymous"))
             return ":".join(act_parts)
         else:
             return row.act
@@ -302,7 +301,7 @@ class Anonymizer:
         select useinfo.timestamp, sid, event, act, div_id, course_id, base_course, chapter, subchapter
             from useinfo left outer join questions on useinfo.div_id = questions.name and questions.base_course = '{self.BASECOURSE}'
             where course_id in
-            {tuple(self.chosen_courses)}
+            ({','.join([x for x in self.chosen_courses])})
         """,
             con=self.eng,
         )
