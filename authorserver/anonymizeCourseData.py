@@ -112,7 +112,7 @@ class Anonymizer:
         print(f"include basecourse = {include_basecourse}")
         self.include_basecourse = include_basecourse
         if specific_course:
-            self.COURSE_LIST = [specific_course] * 2
+            self.COURSE_LIST = [specific_course]
         else:
             self.COURSE_LIST = []
 
@@ -192,6 +192,10 @@ class Anonymizer:
         if self.COURSE_LIST:
             self.chosen_courses = self.COURSE_LIST
 
+        self.in_course_list = (
+            f"""({','.join(["'"+x+"'" for x in self.chosen_courses ])})"""
+        )
+        print(self.in_course_list)
         return self.chosen_courses
 
     def get_users(self):
@@ -201,7 +205,7 @@ class Anonymizer:
         select username, first_name, last_name, courses.course_name, base_course, institution, courselevel, term_start_date
         from auth_user join user_courses on auth_user.id = user_id
             join courses on user_courses.course_id = courses.id
-        where courses.course_name in {tuple(self.chosen_courses)}
+        where courses.course_name in {self.in_course_list}
         """,
             con=self.eng,
         )
@@ -220,7 +224,7 @@ class Anonymizer:
 	        JOIN course_instructor ON auth_user.id = instructor
 	        JOIN courses ON courses.id = course
         WHERE
-	        courses.course_name in {tuple(self.chosen_courses)};
+	        courses.course_name in {self.in_course_list};
         """,
             self.eng,
         )
@@ -300,8 +304,7 @@ class Anonymizer:
             f"""
         select useinfo.timestamp, sid, event, act, div_id, course_id, base_course, chapter, subchapter
             from useinfo left outer join questions on useinfo.div_id = questions.name and questions.base_course = '{self.BASECOURSE}'
-            where course_id in
-            ({','.join([x for x in self.chosen_courses])})
+            where course_id in {self.in_course_list}
         """,
             con=self.eng,
         )
@@ -309,7 +312,7 @@ class Anonymizer:
         code = pd.read_sql_query(
             f"""
         select * from code join courses on code.course_id = courses.id
-        where course_name in {tuple(self.chosen_courses)}""",
+        where course_name in {self.in_course_list}""",
             self.eng,
         )
 
@@ -326,7 +329,7 @@ class Anonymizer:
         for tbl in answer_tables:
             tdf = pd.read_sql_query(
                 f"""
-            select * from {tbl}_answers where course_name in {tuple(self.chosen_courses)}
+            select * from {tbl}_answers where course_name in {self.in_course_list}
             """,
                 self.eng,
             )
