@@ -192,6 +192,13 @@ function startExtract() {
         return;
     }
 
+    if (data.specific_course) {
+        validCourses = document.getElementById("clist").value.split(',');
+        if (validCourses.indexOf(data.specific_course) < 0) {
+            alert(`You are not the instructor for ${data.specific_course}. See note.`)
+            return;
+        }
+    }
     fetch("/start_extract", {
             method: "POST",
             headers: {

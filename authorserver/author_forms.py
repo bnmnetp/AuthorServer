@@ -6,6 +6,7 @@ from wtforms import (
     validators,
     DateTimeField,
     DateField,
+    HiddenField,
     IntegerRangeField,
 )
 
@@ -44,4 +45,5 @@ class DatashopForm(StarletteForm):
     end_date = DateField("Do not include data after")
     sample_size = IntegerRangeField("Number of courses to include")
     include_basecourse = BooleanField("Include data from the open course")
-    specific_course = StringField("Dump Data for one course")
+    specific_course = StringField("Create data shop file for this course")
+    clist = HiddenField()

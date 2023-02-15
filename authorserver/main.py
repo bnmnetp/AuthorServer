@@ -46,7 +46,7 @@ from worker import (
     code_to_csv,
     anonymize_data_dump,
 )
-from models import Session, auth_user, courses, BookAuthor, library
+from models import Session, auth_user, courses, BookAuthor, library, course_instructor
 from authorImpact import (
     get_enrollment_graph,
     get_pv_heatmap,
@@ -374,6 +374,20 @@ async def anondata(request: Request, book: str, user=Depends(auth_manager)):
     if not verify_author(user):
         return RedirectResponse(url="/notauthorized")
 
+    # Create a list of courses taught by this user to validate courses they
+    # can dump directly.
+    sel = select([courses, course_instructor]).where(
+        and_(
+            courses.c.id == course_instructor.c.course,
+            course_instructor.c.instructor == user.id,
+        )
+    )
+    class_list = []
+    with Session() as sess:
+        res = sess.execute(sel)
+        for row in res:
+            class_list.append(row.course_name)
+
     lf_path = pathlib.Path("datashop", user.username)
     logger.debug(f"WORKING DIR = {lf_path}")
     if lf_path.exists():
@@ -384,7 +398,9 @@ async def anondata(request: Request, book: str, user=Depends(auth_manager)):
     # this will either create the form with data from the submitted form or
     # from the kwargs passed if there is not form data.  So we can prepopulate
     #
-    form = await DatashopForm.from_formdata(request, basecourse=book)
+    form = await DatashopForm.from_formdata(
+        request, basecourse=book, clist=",".join(class_list)
+    )
     if request.method == "POST" and await form.validate():
         print(f"Got {form.authors.data}")
         print(f"FORM data = {form.data}")

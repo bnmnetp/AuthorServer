@@ -39,6 +39,9 @@ meta = MetaData()
 auth_user = Table("auth_user", meta, autoload=True, autoload_with=engine)
 courses = Table("courses", meta, autoload=True, autoload_with=engine)
 library = Table("library", meta, autoload=True, autoload_with=engine)
+course_instructor = Table(
+    "course_instructor", meta, autoload=True, autoload_with=engine
+)
 
 
 class BookAuthor(Base):
