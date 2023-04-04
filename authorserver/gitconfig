@@ -1,0 +1,9 @@
+[safe]
+        directory = /books/overview
+        directory = /books/welcomecs
+        directory = *
+[pull]
+        rebase = false
+[user]
+        name = Runestone Author Server
+        email = runestoneinteractive@gmail.com

@@ -19,4 +19,5 @@ RUN pip install poetry
 # copy project
 COPY . .
 COPY .ssh/id_rsa .
+COPY gitconfig /root/.gitconfig
 RUN /usr/local/bin/poetry install
